@@ -25,7 +25,7 @@ class on_reaction_event:
                     if await backend.helpers.user_role_authed(user):
                         if reaction.custom_emoji:
                             if reaction.emoji.name.lower() in ["greentick", "green_tick"]:
-                                if not backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
+                                if not await backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
                                     await backend.helpers.insert_into_table(reaction.message.id, reaction.message.author.id, self.bot.db)
                                     log.info("Got message {}".format(reaction.message.id))
                                     log.info(reaction.message.attachments)
