@@ -4,10 +4,12 @@ import backend.logging
 import backend.config
 import datetime
 from discord.ext import commands
+import asyncpg
 
 
 class Bot(commands.Bot):
     def __init__(self, command_prefix, **options):
+        self.db = None
         super().__init__(command_prefix, **options)
 
     def reload_extension(self, name: str):
@@ -15,6 +17,7 @@ class Bot(commands.Bot):
         self.load_extension(name)
 
     async def start(self, *args, **kwargs):
+        self.db = await asyncpg.create_pool(user="postgres", host="inktober_postgres")
         await super().start(*args, **kwargs)
 
 
