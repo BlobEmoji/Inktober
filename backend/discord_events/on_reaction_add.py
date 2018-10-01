@@ -24,4 +24,4 @@ class on_reaction_event:
 
 
 def setup(bot):
-    bot.add_cog(on_reaction_event)
+    bot.add_cog(on_reaction_event(bot))
