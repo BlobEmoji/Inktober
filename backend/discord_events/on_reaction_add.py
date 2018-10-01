@@ -29,7 +29,7 @@ class OnReactionEvent:
                             if reaction.emoji.name.lower() in ["greentick", "green_tick"]:
                                 if not await backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
                                     await backend.helpers.insert_into_table(reaction.message.id,
-                                                                            reaction.message.author.id, message.content, self.bot.db)
+                                                                            reaction.message.author.id, reaction.message.content, self.bot.db)
                                     log.info("Got message {}".format(reaction.message.id))
                                     log.info(reaction.message.attachments)
                                     log.info(reaction.message.attachments[0]["proxy_url"])
