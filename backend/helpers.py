@@ -13,7 +13,7 @@ async def user_role_authed(member: discord.Member):
 
 
 async def check_if_in_table(message_id, conn):
-    test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from posted_inktober WHERE message_id = $1""", int(message_id))
+    test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from posted_inktober WHERE message_id = $1)""", int(message_id))
     return test
 
 
