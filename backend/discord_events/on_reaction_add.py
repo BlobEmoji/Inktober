@@ -10,7 +10,6 @@ class on_reaction_event:
         self.bot = bot
 
     async def on_reaction_add(self, reaction: discord.Reaction, user):
-        log.info(reaction, user)
         if reaction.message.server.id == "272885620769161216":
             log.info("Is in blob")
             if reaction.message.channel.id == "493851049942319114":
