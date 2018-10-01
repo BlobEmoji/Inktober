@@ -19,10 +19,10 @@ async def check_if_in_table(message_id, conn):
     return test
 
 
-async def insert_into_table(message_id, user_id, conn):
+async def insert_into_table(message_id, user_id, message, conn):
     log.info("Inserted {} by {} into table".format(message_id, user_id))
-    await conn.execute("""INSERT INTO posted_inktober (message_id, user_id) VALUES($1, $2)""", int(message_id),
-                       int(user_id))
+    await conn.execute("""INSERT INTO posted_inktober (message_id, user_id, message) VALUES($1, $2, $3)""", int(message_id),
+                       int(user_id), message)
 
 
 class Helper:
