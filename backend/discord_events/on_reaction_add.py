@@ -1,12 +1,13 @@
 import discord
 import backend.helpers
 import logging
+import random
 
 log = logging.getLogger(__name__)
 
 
 async def inktober_post(message: discord.Message, bot, bot_spam):
-    embed = discord.Embed(title="Inktober", timestamp=message.timestamp)
+    embed = discord.Embed(title="Inktober", timestamp=message.timestamp, colour=random.choice(["E77917", "A55723"]))
     embed.set_image(url=message.attachments[0]["proxy_url"])
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
     await bot.send_message(bot_spam, embed=embed)
