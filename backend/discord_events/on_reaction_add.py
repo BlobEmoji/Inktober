@@ -20,7 +20,7 @@ class on_reaction_event:
                         if reaction.emoji.name.lower() in ["greentick", "green_tick"]:
                             log.info("Got message {}".format(reaction.message.id))
                             log.info(reaction.message.attachments)
-                            log.info(reaction.message.attachments[0].proxy_url)
+                            log.info(reaction.message.attachments[0]["proxy_url"])
 
 
 def setup(bot):
