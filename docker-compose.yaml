@@ -5,7 +5,5 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    depends_on:
-      - postgres
     volumes:
       - ./:/app
