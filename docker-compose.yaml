@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     depends_on:
-      - postgres
+      - inktober_postgres
     volumes:
       - ./:/app
 
