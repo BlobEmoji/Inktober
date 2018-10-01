@@ -8,7 +8,7 @@ startup_extensions = ["backend.discord_events.on_message", "backend.discord_even
                       "backend.command_checks", "backend.helpers"]
 
 
-class Module_Loader:
+class ModuleLoader:
     def __init__(self, bot):
         self.bot = bot
         self.setup()
@@ -59,5 +59,7 @@ class Module_Loader:
             await self.bot.add_reaction(ctx.message, "\U0000274c")
         else:
             await self.bot.add_reaction(ctx.message, "\U00002705")
+
+
 def setup(bot):
-    bot.add_cog(Module_Loader(bot))
+    bot.add_cog(ModuleLoader(bot))

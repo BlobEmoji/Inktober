@@ -13,7 +13,7 @@ async def inktober_post(message: discord.Message, bot, bot_spam):
     await bot.send_message(bot_spam, embed=embed)
 
 
-class on_reaction_event:
+class OnReactionEvent:
     def __init__(self, bot):
         self.bot = bot
 
@@ -27,7 +27,8 @@ class on_reaction_event:
                         if reaction.custom_emoji:
                             if reaction.emoji.name.lower() in ["greentick", "green_tick"]:
                                 if not await backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
-                                    await backend.helpers.insert_into_table(reaction.message.id, reaction.message.author.id, self.bot.db)
+                                    await backend.helpers.insert_into_table(reaction.message.id,
+                                                                            reaction.message.author.id, self.bot.db)
                                     log.info("Got message {}".format(reaction.message.id))
                                     log.info(reaction.message.attachments)
                                     log.info(reaction.message.attachments[0]["proxy_url"])
@@ -40,5 +41,6 @@ class on_reaction_event:
                 else:
                     log.info("No attachments")
 
+
 def setup(bot):
-    bot.add_cog(on_reaction_event(bot))
+    bot.add_cog(OnReactionEvent(bot))

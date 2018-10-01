@@ -1,4 +1,4 @@
-class on_message_event:
+class OnMessageEvent:
     def __init__(self, bot):
         self.bot = bot
 
@@ -7,4 +7,4 @@ class on_message_event:
 
 
 def setup(bot):
-    bot.add_cog(on_message_event(bot))
+    bot.add_cog(OnMessageEvent(bot))
