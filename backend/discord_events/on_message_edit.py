@@ -23,13 +23,13 @@ class OnMessageEditEvent:
                         message_to_update = await self.bot.get_message(my_channel, message_id_to_update)
                         new_embed = message_to_update.embeds[0]
                         log.info(new_embed)
-                        new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                        description=new_embed["description"])
-                        new_embed_embed.set_image(url=new_embed["image"]["url"])
                         if len(after.content) <= 1024:
-                            new_embed_embed.add_field(name="Message", value=after.content)
+                            new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                                            description=after.content)
                         else:
-                            new_embed_embed.add_field(name="Message", value="{}...".format(after.content[:1021]))
+                            new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                                            description="{}...".format(after.content[:1021]))
+                        new_embed_embed.set_image(url=new_embed["image"]["url"])
                         new_embed_embed.set_author(name=new_embed["author"]["name"], icon_url=new_embed["author"]["icon_url"])
                         await self.bot.edit_message(message_to_update, embed=new_embed_embed)
                     else:

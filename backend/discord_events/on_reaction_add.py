@@ -9,9 +9,9 @@ log = logging.getLogger(__name__)
 async def inktober_post(message: discord.Message, bot, bot_spam):
     if message.content != "":
         if len(message.content) <= 1024:
-            embed = discord.Embed(timestamp=message.timestamp, value=message.content)
+            embed = discord.Embed(timestamp=message.timestamp, description=message.content)
         else:
-            embed = discord.Embed(timestamp=message.timestamp, value="{}...".format(message.content[:1021]))
+            embed = discord.Embed(timestamp=message.timestamp, description="{}...".format(message.content[:1021]))
     else:
         embed = discord.Embed(timestamp=message.timestamp)
 
