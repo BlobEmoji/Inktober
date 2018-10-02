@@ -1,6 +1,7 @@
 import discord
 import backend.helpers
 import logging
+import backend.config
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +15,8 @@ async def inktober_post(message: discord.Message, bot, bot_spam):
         else:
             embed.add_field(name="Message", value="{}...".format(message.content[:1021]))
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
-    await bot.send_message(bot_spam, embed=embed)
+    my_id = await bot.send_message(bot_spam, embed=embed)
+    return my_id
 
 
 class OnReactionEvent:
@@ -23,9 +25,7 @@ class OnReactionEvent:
 
     async def on_reaction_add(self, reaction: discord.Reaction, user):
         if reaction.message.server.id == "272885620769161216":
-            log.info("Is in blob")
             if reaction.message.channel.id in ["493851049942319114", "411929226066001930"]:
-                log.info("channel")
                 if reaction.message.attachments != []:
                     if await backend.helpers.user_role_authed(user):
                         if reaction.custom_emoji:
@@ -37,9 +37,11 @@ class OnReactionEvent:
                                     log.info(reaction.message.attachments)
                                     log.info(reaction.message.attachments[0]["proxy_url"])
 
-                                    bot_spam = reaction.message.server.get_channel("411929226066001930")
+                                    bot_spam = reaction.message.server.get_channel(backend.config.inktober_image_channel)
 
-                                    await inktober_post(reaction.message, self.bot, bot_spam)
+                                    my_message_id = await inktober_post(reaction.message, self.bot, bot_spam)
+
+                                    await backend.helpers.insert_into_message_origin_tracking(reaction.message.id, my_message_id, backend.config.inktober_image_channel, self.bot.db)
                                 else:
                                     log.info("Message {} already in table".format(reaction.message.id))
                 else:
