@@ -21,7 +21,7 @@ class OnReactionEvent:
     async def on_reaction_add(self, reaction: discord.Reaction, user):
         if reaction.message.server.id == "272885620769161216":
             log.info("Is in blob")
-            if reaction.message.channel.id == "493851049942319114":
+            if reaction.message.channel.id in ["493851049942319114", "411929226066001930"]:
                 log.info("channel")
                 if reaction.message.attachments != []:
                     if await backend.helpers.user_role_authed(user):
