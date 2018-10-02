@@ -21,9 +21,21 @@ async def check_if_in_table(message_id, conn):
 
 async def insert_into_table(message_id, user_id, message, conn):
     log.info("Inserted {} by {} into table".format(message_id, user_id))
-    await conn.execute("""INSERT INTO posted_inktober (message_id, user_id, message) VALUES($1, $2, $3)""",
-                       int(message_id),
-                       int(user_id), message)
+    await conn.execute(
+        """INSERT INTO posted_inktober (message_id, user_id, message, inktober_day) VALUES($1, $2, $3, $4)""",
+        int(message_id),
+        int(user_id),
+        message,
+        "")
+
+
+async def insert_day(message_id, day, conn):
+    await conn.execute("""UPDATE posted_inktober SET inktober_day = $1 WHERE message_id = $2""", str(day), int(message_id))
+
+
+async def fetch_day(message_id, conn):
+    day = await conn.fetchval("""SELECT inktober_day FROM posted_inktober WHERE message_id = $1""", int(message_id))
+    return day
 
 
 async def insert_into_message_origin_tracking(message_id, my_message_id, channel_id, conn):
@@ -37,6 +49,15 @@ async def check_if_in_tracking_table(message_id, conn):
     test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from my_posts_to_original WHERE original_id = $1)""",
                                int(message_id))
     return test
+
+
+async def grab_original_id(embed_id, conn):
+    row = await conn.fetchrow("""SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
+    return row["original_id"], row["my_channel_id"]
+
+
+async def insert_original_id(embed_id, original_id, channel_id, conn):
+    await conn.execute("""INSERT INTO my_message_to_original (my_message_id, original_id, my_channel_id) VALUES ($1, $2, $3)""", int(embed_id), int(original_id), int(channel_id))
 
 
 async def fetch_from_tracking_table(message_id, conn):
