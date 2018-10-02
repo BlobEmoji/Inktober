@@ -41,7 +41,7 @@ class OnReactionEvent:
 
                                     my_message_id = await inktober_post(reaction.message, self.bot, bot_spam)
 
-                                    await backend.helpers.insert_into_message_origin_tracking(reaction.message.id, my_message_id, backend.config.inktober_image_channel, self.bot.db)
+                                    await backend.helpers.insert_into_message_origin_tracking(reaction.message.id, my_message_id.id, backend.config.inktober_image_channel, self.bot.db)
                                 else:
                                     log.info("Message {} already in table".format(reaction.message.id))
                 else:
