@@ -5,7 +5,7 @@ from discord.ext import commands
 log = logging.getLogger(__name__)
 
 startup_extensions = ["backend.discord_events.on_message", "backend.discord_events.on_reaction_add",
-                      "backend.discord_events.on_message_edit"
+                      "backend.discord_events.on_message_edit",
                       "backend.command_checks", "backend.helpers"]
 
 

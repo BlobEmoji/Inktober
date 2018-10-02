@@ -7,3 +7,12 @@ async def is_authed(ctx):
             return True
     else:
         return False
+
+
+class CommandChecks:
+    def __init__(self, bot):
+        self.bot = bot
+
+
+def setup(bot):
+    bot.add_cog(CommandChecks(bot))
