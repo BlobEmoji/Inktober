@@ -23,7 +23,8 @@ class OnMessageEditEvent:
                         message_to_update = await self.bot.get_message(my_channel, message_id_to_update)
                         new_embed = message_to_update.embeds[0]
                         log.info(new_embed)
-                        new_embed_embed = discord.Embed(title=new_embed["title"], timestamp=discord.utils.parse_time(new_embed["timestamp"]))
+                        new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                                        description=new_embed["description"])
                         new_embed_embed.set_image(url=new_embed["image"]["url"])
                         if len(after.content) <= 1024:
                             new_embed_embed.add_field(name="Message", value=after.content)

@@ -7,13 +7,15 @@ log = logging.getLogger(__name__)
 
 
 async def inktober_post(message: discord.Message, bot, bot_spam):
-    embed = discord.Embed(title="Inktober", timestamp=message.timestamp)
-    embed.set_image(url=message.attachments[0]["proxy_url"])
     if message.content != "":
         if len(message.content) <= 1024:
-            embed.add_field(name="Message", value=message.content)
+            embed = discord.Embed(timestamp=message.timestamp, value=message.content)
         else:
-            embed.add_field(name="Message", value="{}...".format(message.content[:1021]))
+            embed = discord.Embed(timestamp=message.timestamp, value="{}...".format(message.content[:1021]))
+    else:
+        embed = discord.Embed(timestamp=message.timestamp)
+
+    embed.set_image(url=message.attachments[0]["proxy_url"])
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
     my_id = await bot.send_message(bot_spam, embed=embed)
     return my_id
