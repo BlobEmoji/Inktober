@@ -1,6 +1,7 @@
 import discord
 import backend.helpers
 import logging
+import backend.day_themes
 import backend.config
 
 log = logging.getLogger(__name__)
@@ -9,9 +10,13 @@ log = logging.getLogger(__name__)
 async def inktober_post(message: discord.Message, bot, bot_spam):
     if message.content != "":
         if len(message.content) <= 1024:
-            embed = discord.Embed(timestamp=message.timestamp, description=message.content)
+            embed = discord.Embed(timestamp=message.timestamp,
+                                  description=message.content,
+                                  colour=15169815)
         else:
-            embed = discord.Embed(timestamp=message.timestamp, description="{}...".format(message.content[:1021]))
+            embed = discord.Embed(timestamp=message.timestamp,
+                                  description="{}...".format(message.content[:1021]),
+                                  colour=15169815)
     else:
         embed = discord.Embed(timestamp=message.timestamp)
 
@@ -101,10 +106,15 @@ class OnReactionEvent:
 
                                 if "description" in new_embed.keys():
                                     new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                                    description=new_embed["description"])
+                                                                    description=new_embed["description"],
+                                                                    title="Day {} ({})".format(str(day),
+                                                                                               backend.day_themes.day_themes[day]),
+                                                                    colour=15169815)
                                 else:
-                                    new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]))
-                                new_embed_embed.add_field(name="Day", value=str(day))
+                                    new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                                                    title="Day {} ({})".format(str(day),
+                                                                                               backend.day_themes.day_themes[day]),
+                                                                    colour=15169815)
                                 new_embed_embed.set_image(url=new_embed["image"]["url"])
                                 new_embed_embed.set_author(name=new_embed["author"]["name"],
                                                            icon_url=new_embed["author"]["icon_url"])

@@ -29,11 +29,14 @@ class OnMessageEditEvent:
 
                         if len(after.content) <= 1024:
                             new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                            description=after.content)
+                                                            description=after.content, title=new_embed["title"],
+                                                            colour=15169815)
 
                         else:
                             new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                            description="{}...".format(after.content[:1021]))
+                                                            description="{}...".format(after.content[:1021]),
+                                                            title=new_embed["title"],
+                                                            colour=15169815)
 
                         new_embed_embed.set_image(url=new_embed["image"]["url"])
                         new_embed_embed.set_author(name=new_embed["author"]["name"], icon_url=new_embed["author"]["icon_url"])
