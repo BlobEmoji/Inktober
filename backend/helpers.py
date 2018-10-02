@@ -27,7 +27,7 @@ async def insert_into_table(message_id, user_id, message, conn):
 
 async def insert_into_message_origin_tracking(message_id, my_message_id, channel_id, conn):
     log.info("Inserted {} | {} into tracker".format(message_id, my_message_id))
-    await conn.execute("""INSERT INTO my_posts_to_original (original_id, my_message_id, channel_id) VALUES($1, $2, $3)""", int(message_id), int(my_message_id), int(channel_id))
+    await conn.execute("""INSERT INTO my_posts_to_original (original_id, my_message_id, my_channel_id) VALUES($1, $2, $3)""", int(message_id), int(my_message_id), int(channel_id))
 
 
 async def check_if_in_tracking_table(message_id, conn):
@@ -37,7 +37,7 @@ async def check_if_in_tracking_table(message_id, conn):
 
 
 async def fetch_from_tracking_table(message_id, conn):
-    my_message_id, channel_id = await conn.fetchval("""SELECT my_message_id, channel_id from my_posts_to_original WHERE message_id = $1""",
+    my_message_id, channel_id = await conn.fetchval("""SELECT my_message_id, my_channel_id FROM my_posts_to_original WHERE message_id = $1""",
                                int(message_id))
     return my_message_id, channel_id
 
