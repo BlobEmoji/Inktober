@@ -3,6 +3,7 @@ import backend.helpers
 import logging
 import backend.day_themes
 import backend.config
+import discord.errors
 
 log = logging.getLogger(__name__)
 
@@ -108,8 +109,16 @@ class OnReactionEvent:
                         log.info("{}".format(await backend.helpers.fetch_day(reaction.message.id, self.bot.db)))
                         if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
                             log.info("Locking {}".format(reaction.message.id))
-                            for emoji in ["◀", "⏺", "▶", "🔒"]:
-                                await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                            try:
+                                await self.bot.clear_reactions(reaction.message)
+                            except discord.errors.Forbidden as Forbidden:
+                                log.info("Forbidden from clearing reactions: {}".format(Forbidden))
+                                for emoji in ["◀", "⏺", "▶", "🔒"]:
+                                    await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                            except discord.errors.HTTPException as HTTP:
+                                log.info("HTTPException: {}".format(HTTP))
+                                for emoji in ["◀", "⏺", "▶", "🔒"]:
+                                    await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
 
 
 def setup(bot):
