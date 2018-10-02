@@ -9,7 +9,10 @@ async def inktober_post(message: discord.Message, bot, bot_spam):
     embed = discord.Embed(title="Inktober", timestamp=message.timestamp)
     embed.set_image(url=message.attachments[0]["proxy_url"])
     if message.content != "":
-        embed.add_field(name="Message", value=message.content)
+        if len(message.content) <= 1024:
+            embed.add_field(name="Message", value=message.content)
+        else:
+            embed.add_field(name="Message", value="{}...".format(message.content[:1021]))
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
     await bot.send_message(bot_spam, embed=embed)
 
