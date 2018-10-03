@@ -61,50 +61,49 @@ class OnReactionEvent:
                     log.info("Date buttons")
                     if reaction.message.author == self.bot.user:
                         if await backend.helpers.user_role_authed(user):
-                            if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
-                                now_time = reaction.message.timestamp
-                                now_day = int(now_time.strftime("%d"))
-                                original_message_id, _ = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
+                            now_time = reaction.message.timestamp
+                            now_day = int(now_time.strftime("%d"))
+                            original_message_id, _ = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
 
-                                if reaction.emoji == "⏺":
-                                    day = now_day
-                                    await backend.helpers.insert_day(original_message_id, now_day, self.bot.db)
-                                    await self.bot.add_reaction(reaction.message, "🔒")
+                            if reaction.emoji == "⏺":
+                                day = now_day
+                                await backend.helpers.insert_day(original_message_id, now_day, self.bot.db)
+                                await self.bot.add_reaction(reaction.message, "🔒")
 
-                                elif reaction.emoji == "▶":
-                                    day = now_day + 1
-                                    await backend.helpers.insert_day(original_message_id, now_day + 1, self.bot.db)
-                                    await self.bot.add_reaction(reaction.message, "🔒")
+                            elif reaction.emoji == "▶":
+                                day = now_day + 1
+                                await backend.helpers.insert_day(original_message_id, now_day + 1, self.bot.db)
+                                await self.bot.add_reaction(reaction.message, "🔒")
 
-                                elif reaction.emoji == "◀":
-                                    day = now_day - 1
-                                    await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
-                                    await self.bot.add_reaction(reaction.message, "🔒")
+                            elif reaction.emoji == "◀":
+                                day = now_day - 1
+                                await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
+                                await self.bot.add_reaction(reaction.message, "🔒")
 
-                                else:
-                                    day = now_day
-                                    log.warning("How did this happen? {} | {}".format(reaction.message.id, reaction.emoji))
+                            else:
+                                day = now_day
+                                log.warning("How did this happen? {} | {}".format(reaction.message.id, reaction.emoji))
 
-                                #my_message_id, my_message_channel_id = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
-                                # message_id_to_update, my_message_channel_id = await backend.helpers.fetch_from_tracking_table(
-                                #    reaction.message.id, self.bot.db)
+                            #my_message_id, my_message_channel_id = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
+                            # message_id_to_update, my_message_channel_id = await backend.helpers.fetch_from_tracking_table(
+                            #    reaction.message.id, self.bot.db)
 
-                                #my_channel = reaction.message.server.get_channel(str(my_message_channel_id))
-                                #message_to_update = await self.bot.get_message(my_channel, my_message_id)
-                                message_to_update = reaction.message
-                                #log.info("{} {} {}".format(my_channel, my_message_id, message_to_update))
-                                new_embed = message_to_update.embeds[0]
-                                log.info(new_embed)
+                            #my_channel = reaction.message.server.get_channel(str(my_message_channel_id))
+                            #message_to_update = await self.bot.get_message(my_channel, my_message_id)
+                            message_to_update = reaction.message
+                            #log.info("{} {} {}".format(my_channel, my_message_id, message_to_update))
+                            new_embed = message_to_update.embeds[0]
+                            log.info(new_embed)
 
-                                new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                                title="Day {} ({})".format(str(day),
-                                                                                           backend.day_themes.day_themes[day]),
-                                                                colour=15169815)
-                                new_embed_embed.set_image(url=new_embed["image"]["url"])
-                                new_embed_embed.set_author(name=new_embed["author"]["name"],
-                                                           icon_url=new_embed["author"]["icon_url"])
+                            new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                                            title="Day {} ({})".format(str(day),
+                                                                                       backend.day_themes.day_themes[day]),
+                                                            colour=15169815)
+                            new_embed_embed.set_image(url=new_embed["image"]["url"])
+                            new_embed_embed.set_author(name=new_embed["author"]["name"],
+                                                       icon_url=new_embed["author"]["icon_url"])
 
-                                await self.bot.edit_message(message_to_update, embed=new_embed_embed)
+                            await self.bot.edit_message(message_to_update, embed=new_embed_embed)
                 elif reaction.emoji in ["🔒"]:
                     if user != self.bot.user:
                         log.info("{}".format(await backend.helpers.fetch_day(reaction.message.id, self.bot.db)))
