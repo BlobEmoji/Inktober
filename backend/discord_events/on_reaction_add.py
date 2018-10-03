@@ -64,20 +64,21 @@ class OnReactionEvent:
                             if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
                                 now_time = reaction.message.timestamp
                                 now_day = int(now_time.strftime("%d"))
+                                original_message_id, _ = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
 
                                 if reaction.emoji == "⏺":
                                     day = now_day
-                                    await backend.helpers.insert_day(reaction.message.id, now_day, self.bot.db)
+                                    await backend.helpers.insert_day(original_message_id, now_day, self.bot.db)
                                     await self.bot.add_reaction(reaction.message, "🔒")
 
                                 elif reaction.emoji == "▶":
                                     day = now_day + 1
-                                    await backend.helpers.insert_day(reaction.message.id, now_day + 1, self.bot.db)
+                                    await backend.helpers.insert_day(original_message_id, now_day + 1, self.bot.db)
                                     await self.bot.add_reaction(reaction.message, "🔒")
 
                                 elif reaction.emoji == "◀":
                                     day = now_day - 1
-                                    await backend.helpers.insert_day(reaction.message.id, now_day - 1, self.bot.db)
+                                    await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
                                     await self.bot.add_reaction(reaction.message, "🔒")
 
                                 else:
