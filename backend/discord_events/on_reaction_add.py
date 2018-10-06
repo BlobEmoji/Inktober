@@ -64,44 +64,46 @@ class OnReactionEvent:
             log.info("User not authed {} {}".format(user.id, reaction.message.id))
             return
 
-        if await location_check(reaction.message):
-            if reaction.message.attachments != []:
+        message: discord.Message = reaction.message
+
+        if await location_check(message):
+            if message.attachments != []:
                 if reaction.custom_emoji:
                     if reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes:
-                        if not await backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
-                            await new_inktober(reaction.message, self.bot)
+                        if not await backend.helpers.check_if_in_table(message.id, self.bot.db):
+                            await new_inktober(message, self.bot)
                         else:
-                            log.info("Message {} already in table".format(reaction.message.id))
+                            log.info("Message {} already in table".format(message.id))
             else:
                 log.info("No attachments")
 
             if reaction.emoji in backend.config.date_buttons:
                 log.info("Date buttons")
-                if reaction.message.author == self.bot.user:
-                    now_time = reaction.message.timestamp
+                if message.author == self.bot.user:
+                    now_time = message.timestamp
                     now_day = int(now_time.strftime("%d"))
-                    original_message_id, _ = await backend.helpers.grab_original_id(reaction.message.id, self.bot.db)
+                    original_message_id, _ = await backend.helpers.grab_original_id(message.id, self.bot.db)
 
                     if reaction.emoji == "⏺":
                         day = now_day
                         await backend.helpers.insert_day(original_message_id, now_day, self.bot.db)
-                        await self.bot.add_reaction(reaction.message, backend.config.inktober_lock_image_button)
+                        await self.bot.add_reaction(message, backend.config.inktober_lock_image_button)
 
                     elif reaction.emoji == "▶":
                         day = now_day + 1
                         await backend.helpers.insert_day(original_message_id, now_day + 1, self.bot.db)
-                        await self.bot.add_reaction(reaction.message, backend.config.inktober_lock_image_button)
+                        await self.bot.add_reaction(message, backend.config.inktober_lock_image_button)
 
                     elif reaction.emoji == "◀":
                         day = now_day - 1
                         await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
-                        await self.bot.add_reaction(reaction.message, backend.config.inktober_lock_image_button)
+                        await self.bot.add_reaction(message, backend.config.inktober_lock_image_button)
 
                     else:
                         day = now_day
-                        log.warning("How did this happen? {} | {}".format(reaction.message.id, reaction.emoji))
+                        log.warning("How did this happen? {} | {}".format(message.id, reaction.emoji))
 
-                    message_to_update = reaction.message
+                    message_to_update = message
                     new_embed = message_to_update.embeds[0]
                     log.info(new_embed)
 
@@ -115,19 +117,19 @@ class OnReactionEvent:
 
                     await self.bot.edit_message(message_to_update, embed=new_embed_embed)
             elif reaction.emoji == backend.config.inktober_lock_image_button:
-                log.info("{}".format(await backend.helpers.fetch_day(reaction.message.id, self.bot.db)))
-                if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
-                    log.info("Locking {}".format(reaction.message.id))
+                log.info("{}".format(await backend.helpers.fetch_day(message.id, self.bot.db)))
+                if await backend.helpers.fetch_day(message.id, self.bot.db) != "":
+                    log.info("Locking {}".format(message.id))
                     try:
-                        await self.bot.clear_reactions(reaction.message)
+                        await self.bot.clear_reactions(message)
                     except discord.errors.Forbidden as Forbidden:
                         log.info("Forbidden from clearing reactions: {}".format(Forbidden))
                         for emoji in backend.config.all_inktober_buttons:
-                            await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                            await self.bot.remove_reaction(message, emoji, self.bot.user)
                     except discord.errors.HTTPException as HTTP:
                         log.info("HTTPException: {}".format(HTTP))
                         for emoji in backend.config.all_inktober_buttons:
-                            await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                            await self.bot.remove_reaction(message, emoji, self.bot.user)
 
 
 def setup(bot):
