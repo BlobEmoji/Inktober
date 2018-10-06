@@ -106,19 +106,20 @@ class OnReactionEvent:
                             await self.bot.edit_message(message_to_update, embed=new_embed_embed)
                 elif reaction.emoji in ["🔒"]:
                     if user != self.bot.user:
-                        log.info("{}".format(await backend.helpers.fetch_day(reaction.message.id, self.bot.db)))
-                        if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
-                            log.info("Locking {}".format(reaction.message.id))
-                            try:
-                                await self.bot.clear_reactions(reaction.message)
-                            except discord.errors.Forbidden as Forbidden:
-                                log.info("Forbidden from clearing reactions: {}".format(Forbidden))
-                                for emoji in ["◀", "⏺", "▶", "🔒"]:
-                                    await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
-                            except discord.errors.HTTPException as HTTP:
-                                log.info("HTTPException: {}".format(HTTP))
-                                for emoji in ["◀", "⏺", "▶", "🔒"]:
-                                    await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                        if await backend.helpers.user_role_authed(user):
+                            log.info("{}".format(await backend.helpers.fetch_day(reaction.message.id, self.bot.db)))
+                            if await backend.helpers.fetch_day(reaction.message.id, self.bot.db) != "":
+                                log.info("Locking {}".format(reaction.message.id))
+                                try:
+                                    await self.bot.clear_reactions(reaction.message)
+                                except discord.errors.Forbidden as Forbidden:
+                                    log.info("Forbidden from clearing reactions: {}".format(Forbidden))
+                                    for emoji in ["◀", "⏺", "▶", "🔒"]:
+                                        await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
+                                except discord.errors.HTTPException as HTTP:
+                                    log.info("HTTPException: {}".format(HTTP))
+                                    for emoji in ["◀", "⏺", "▶", "🔒"]:
+                                        await self.bot.remove_reaction(reaction.message, emoji, self.bot.user)
 
 
 def setup(bot):
