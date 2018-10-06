@@ -1,10 +1,12 @@
-import discord
-import logging
-import backend.logging
-import backend.config
 import datetime
-from discord.ext import commands
+import logging
+
 import asyncpg
+import discord
+from discord.ext import commands
+
+import backend.config
+import backend.logging
 
 
 class Bot(commands.Bot):
@@ -31,7 +33,7 @@ async def on_ready():
     log.info("Connected to: ")
 
     for server in inktober.servers:
-        log.info(server)
+        log.info(server.name)
 
     await inktober.change_presence(game=discord.Game(name="Haunting blobkind"), status=None, afk=False)
 

@@ -25,30 +25,32 @@ async def inktober_post(message: discord.Message, bot, bot_spam):
 
 async def location_check(message: discord.Message):
     if message.server.id == backend.config.inktober_server:
+        log.info("Inktober server")
         if message.channel.id in backend.config.inktober_authed_channels:
+            log.info("Inktober authed")
             return True
     return False
 
 
-async def new_inktober(reaction: discord.Reaction, bot):
-    await backend.helpers.insert_into_table(reaction.message.id,
-                                            reaction.message.author.id,
-                                            reaction.message.content, bot.db)
-    log.info("Got message {}".format(reaction.message.id))
-    log.info(reaction.message.attachments)
-    log.info(reaction.message.attachments[0]["proxy_url"])
+async def new_inktober(message: discord.Message, bot):
+    await backend.helpers.insert_into_table(message.id,
+                                            message.author.id,
+                                            message.content, bot.db)
+    log.info("Got message {}".format(message.id))
+    log.info(message.attachments)
+    log.info(message.attachments[0]["proxy_url"])
 
-    bot_spam = reaction.message.server.get_channel(
+    bot_spam = message.server.get_channel(
         backend.config.inktober_image_channel)
 
-    my_message_id = await inktober_post(reaction.message, bot, bot_spam)
+    my_message_id = await inktober_post(message, bot, bot_spam)
 
-    await backend.helpers.insert_into_message_origin_tracking(reaction.message.id,
+    await backend.helpers.insert_into_message_origin_tracking(message.id,
                                                               my_message_id.id,
-                                                              backend.config.inktober_image_channel,
+                                                              message.channel.id,
                                                               bot.db)
-    await backend.helpers.insert_original_id(my_message_id.id, reaction.message.id,
-                                             backend.config.inktober_image_channel, bot.db)
+    await backend.helpers.insert_original_id(my_message_id.id, message.id,
+                                             message.channel.id, bot.db)
 
 
 class OnReactionEvent:
@@ -59,6 +61,7 @@ class OnReactionEvent:
         if user == self.bot.user:
             return
         if not await backend.helpers.user_role_authed(user):
+            log.info("User not authed {} {}".format(user.id, reaction.message.id))
             return
 
         if await location_check(reaction.message):
@@ -66,7 +69,7 @@ class OnReactionEvent:
                 if reaction.custom_emoji:
                     if reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes:
                         if not await backend.helpers.check_if_in_table(reaction.message.id, self.bot.db):
-                            await new_inktober(reaction, self.bot)
+                            await new_inktober(reaction.message, self.bot)
                         else:
                             log.info("Message {} already in table".format(reaction.message.id))
             else:

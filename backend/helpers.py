@@ -1,6 +1,12 @@
 import logging
-import backend.config
+
+import asyncpg.exceptions
 import discord
+from discord.ext import commands
+
+import backend.command_checks
+import backend.config
+import backend.discord_events.on_reaction_add
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +59,10 @@ async def check_if_in_tracking_table(message_id, conn):
 
 async def grab_original_id(embed_id, conn):
     row = await conn.fetchrow("""SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
-    return row["original_id"], row["my_channel_id"]
+    try:
+        return row["original_id"], row["my_channel_id"]
+    except TypeError as TE:
+        log.warning("{} | {} | Can't find original id".format(TE, embed_id))
 
 
 async def insert_original_id(embed_id, original_id, channel_id, conn):
@@ -72,6 +81,36 @@ class Helper:
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.command(pass_context=True)
+    @commands.check(backend.command_checks.is_authed)
+    async def force_add_message(self, ctx: commands.Context):
+        if len(ctx.message.content.split(" ")) != 3:
+            await self.bot.say("I need a channel ID then a message ID in the format of "
+                               "'command' channel_id message_id")
+            return
+
+        channel = ctx.message.content.split(" ")[1]
+        message = ctx.message.content.split(" ")[2]
+
+        fetched_channel = self.bot.get_channel(channel)
+        if fetched_channel is None:
+            await self.bot.say("Your first variable was a invalid channel ID")
+            return
+
+        try:
+            fetched_message = await self.bot.get_message(fetched_channel, message)
+        except discord.NotFound as DNF:
+            await self.bot.say(DNF)
+            return
+
+        try:
+            await backend.discord_events.on_reaction_add.new_inktober(fetched_message, self.bot)
+            log.info("Forced added {} for {}".format(message, ctx.message.author.id))
+            await self.bot.add_reaction(ctx.message, "\U00002705")
+        except asyncpg.exceptions.UniqueViolationError as e:
+            await self.bot.add_reaction(ctx.message, "\U0000274c")
+            await self.bot.say(e)
+
 
 def setup(bot):
-    bot.add_cog(Helper)
+    bot.add_cog(Helper(bot))
