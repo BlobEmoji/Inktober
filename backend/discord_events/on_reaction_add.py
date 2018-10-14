@@ -81,7 +81,7 @@ class OnReactionEvent:
                 log.info("Date buttons")
                 if message.author == self.bot.user:
                     now_embed: discord.Embed = message.embeds[0]
-                    now_time: datetime.datetime = now_embed.timestamp
+                    now_time: datetime.datetime = discord.utils.parse_time(now_embed["timestamp"])
                     now_day = int(now_time.strftime("%d"))
                     original_message_id, _ = await backend.helpers.grab_original_id(message.id, self.bot.db)
 
