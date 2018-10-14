@@ -153,6 +153,8 @@ class Helper:
         new_embed_embed.set_author(name=new_embed["author"]["name"],
                                    icon_url=new_embed["author"]["icon_url"])
 
+        await self.bot.edit_message(fetched_message, embed=new_embed_embed)
+        await self.bot.add_reaction(ctx.message, "\U00002705")
 
 def setup(bot):
     bot.add_cog(Helper(bot))
