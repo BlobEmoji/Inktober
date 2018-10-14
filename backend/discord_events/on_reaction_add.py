@@ -6,6 +6,7 @@ import discord.errors
 import backend.config
 import backend.day_themes
 import backend.helpers
+import datetime
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,6 @@ async def inktober_post(message: discord.Message, bot, bot_spam):
 
 async def location_check(message: discord.Message):
     if message.server.id == backend.config.inktober_server:
-        log.info("Inktober server")
         if message.channel.id in backend.config.inktober_authed_channels:
             log.info("Inktober authed")
             return True
@@ -80,7 +80,8 @@ class OnReactionEvent:
             if reaction.emoji in backend.config.date_buttons:
                 log.info("Date buttons")
                 if message.author == self.bot.user:
-                    now_time = message.timestamp
+                    now_embed: discord.Embed = message.embeds[0]
+                    now_time: datetime.datetime = now_embed.timestamp
                     now_day = int(now_time.strftime("%d"))
                     original_message_id, _ = await backend.helpers.grab_original_id(message.id, self.bot.db)
 
