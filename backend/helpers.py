@@ -7,6 +7,7 @@ from discord.ext import commands
 import backend.command_checks
 import backend.config
 import backend.discord_events.on_reaction_add
+import backend.day_themes
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ async def check_if_in_tracking_table(message_id, conn):
     return test
 
 
-async def grab_original_id(embed_id, conn):
+async def grab_original_id(embed_id: int, conn):
     row = await conn.fetchrow("""SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
     try:
         return row["original_id"], row["my_channel_id"]
@@ -110,6 +111,47 @@ class Helper:
         except asyncpg.exceptions.UniqueViolationError as e:
             await self.bot.add_reaction(ctx.message, "\U0000274c")
             await self.bot.say(e)
+
+    @commands.command(pass_context=True)
+    @commands.check(backend.command_checks.is_authed)
+    async def force_alter_day(self, ctx: commands.Context):
+        if len(ctx.message.content.split(" ")) != 4:
+            await self.bot.say("I need a channel ID then a message ID then a day (as a int) in the format of "
+                               "'command' channel_id message_id day")
+            return
+
+        channel = ctx.message.content.split(" ")[1]
+        message = ctx.message.content.split(" ")[2]
+        try:
+            day = int(ctx.message.content.split(" ")[3])
+        except ValueError as VE:
+            await self.bot.say(f"{VE} | on the day which should be your third variable")
+            return
+
+        fetched_channel = self.bot.get_channel(channel)
+        if fetched_channel is None:
+            await self.bot.say("Your first variable was a invalid channel ID")
+            return
+
+        try:
+            fetched_message = await self.bot.get_message(fetched_channel, message)
+        except discord.NotFound as DNF:
+            await self.bot.say(DNF)
+            return
+
+        new_embed = fetched_message.embeds[0]
+        log.info(new_embed)
+
+        original_message_id, _ = await backend.helpers.grab_original_id(fetched_message.id, self.bot.db)
+        await insert_day(original_message_id, day, self.bot.db)
+
+        new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                                        title="Day {} ({})".format(str(day),
+                                                                   backend.day_themes.day_themes[day]),
+                                        colour=15169815)
+        new_embed_embed.set_image(url=new_embed["image"]["url"])
+        new_embed_embed.set_author(name=new_embed["author"]["name"],
+                                   icon_url=new_embed["author"]["icon_url"])
 
 
 def setup(bot):
