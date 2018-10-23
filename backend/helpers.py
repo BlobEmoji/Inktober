@@ -82,9 +82,15 @@ class Helper:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, aliases=["fadd"])
     @commands.check(backend.command_checks.is_authed)
     async def force_add_message(self, ctx: commands.Context):
+        """
+        Forces adds a message into the inktober channel if you specify the
+        channel_id message_id
+        :param ctx:
+        :return:
+        """
         if len(ctx.message.content.split(" ")) != 3:
             await self.bot.say("I need a channel ID then a message ID in the format of "
                                "'command' channel_id message_id")
@@ -112,9 +118,15 @@ class Helper:
             await self.bot.add_reaction(ctx.message, "\U0000274c")
             await self.bot.say(e)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, aliases=["fday"])
     @commands.check(backend.command_checks.is_authed)
     async def force_alter_day(self, ctx: commands.Context):
+        """
+        Force alters the set day for a already sent inktober post
+        if you give it the channel_id message_id date
+        :param ctx:
+        :return:
+        """
         if len(ctx.message.content.split(" ")) != 4:
             await self.bot.say("I need a channel ID then a message ID then a day (as a int) in the format of "
                                "'command' channel_id message_id day")
