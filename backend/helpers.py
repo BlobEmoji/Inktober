@@ -86,10 +86,8 @@ class Helper:
     @commands.check(backend.command_checks.is_authed)
     async def force_add_message(self, ctx: commands.Context):
         """
-        Forces adds a message into the inktober channel if you specify the
-        channel_id message_id
-        :param ctx:
-        :return:
+        Forces adds a message into the inktober channel
+        if you specify the channel_id message_id
         """
         if len(ctx.message.content.split(" ")) != 3:
             await self.bot.say("I need a channel ID then a message ID in the format of "
@@ -124,8 +122,6 @@ class Helper:
         """
         Force alters the set day for a already sent inktober post
         if you give it the channel_id message_id date
-        :param ctx:
-        :return:
         """
         if len(ctx.message.content.split(" ")) != 4:
             await self.bot.say("I need a channel ID then a message ID then a day (as a int) in the format of "
