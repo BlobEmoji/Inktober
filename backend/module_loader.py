@@ -1,5 +1,6 @@
 import logging
 import traceback
+from bot import Bot as Client
 
 from discord.ext import commands
 
@@ -7,12 +8,12 @@ log = logging.getLogger(__name__)
 
 startup_extensions = ["backend.discord_events.on_message", "backend.discord_events.on_reaction_add",
                       "backend.discord_events.on_message_edit",
-                      "backend.command_checks", "backend.helpers"]
+                      "backend.command_checks", "backend.helpers", "backend.errors"]
 
 
 class ModuleLoader:
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: Client = bot
         self.setup()
 
     def setup(self):
@@ -25,14 +26,15 @@ class ModuleLoader:
                 log.error("Failed to load extension {}\n{}".format(extension, exc))
 
     @commands.command(pass_context=True)
+    @commands.is_owner()
     async def reload(self, ctx: commands.Context, extension: str):
-        if ctx.message.author.id == "240973228632178689":
+        if ctx.message.author.id == 240973228632178689:
             """Reload extensions."""
             await self.backend(ctx, 'reload', extension)
         else:
-            await self.bot.add_reaction(ctx.message, "\U0000274c")
+            await ctx.message.add_reaction("\U0000274c")
 
-    async def backend(self, ctx, action, extension):
+    async def backend(self, ctx: commands.Context, action, extension):
         """
         Handles the loading/reloading/unloading of extensions.
 
@@ -53,14 +55,15 @@ class ModuleLoader:
             method(extension)
             log.info(f'successfully {action}ed {extension}')
         except ModuleNotFoundError as MNFE:
-            await self.bot.say(MNFE)
+            log.info(MNFE)
+            await ctx.send(MNFE)
         except Exception as e:
             log.error("Failed to {} {}: {}".format(action, extension, e.__class__.__name__))
 
-            await self.bot.say("```{}```".format(traceback.format_exc(limit=15)))
-            await self.bot.add_reaction(ctx.message, "\U0000274c")
+            await ctx.send("```{}```".format(traceback.format_exc(limit=15)))
+            await ctx.message.add_reaction("\U0000274c")
         else:
-            await self.bot.add_reaction(ctx.message, "\U00002705")
+            await ctx.message.add_reaction("\U00002705")
 
 
 def setup(bot):

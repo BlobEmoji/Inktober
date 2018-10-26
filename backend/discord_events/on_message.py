@@ -1,6 +1,9 @@
+from bot import Bot as Client
+
+
 class OnMessageEvent:
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: Client = bot
 
     async def on_message(self, message):
         pass
