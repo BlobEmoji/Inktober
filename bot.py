@@ -23,7 +23,7 @@ class Bot(commands.Bot):
         await super().start(*args, **kwargs)
 
 
-inktober: Bot = Bot(command_prefix="bb!",
+inktober: Bot = Bot(command_prefix="b!",
                     owner_id=240973228632178689)
 
 
