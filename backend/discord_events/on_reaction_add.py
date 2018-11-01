@@ -1,5 +1,6 @@
 import datetime
 import logging
+import calendar
 
 import discord
 import discord.errors
@@ -104,6 +105,15 @@ class OnReactionEvent:
 
                     elif reaction.emoji == "◀":
                         day = now_day - 1
+                        if day == 0:
+                            now: datetime.datetime = datetime.datetime.now()
+                            year: int = int(now.strftime("%Y"))
+                            month: int = int(now.strftime("%m"))
+                            if month == 1:
+                                month_data: tuple = calendar.monthrange(year, 12)
+                            else:
+                                month_data: tuple = calendar.monthrange(year, month - 1)
+                            day = month_data[1]
                         await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
                         await message.add_reaction(backend.config.inktober_lock_image_button)
 
