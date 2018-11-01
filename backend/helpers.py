@@ -121,7 +121,7 @@ class Helper:
             await ctx.message.add_reaction("\U00002705")
         except asyncpg.exceptions.UniqueViolationError as e:
             await ctx.message.add_reaction("\U0000274c")
-            await ctx.message.send(e)
+            await ctx.send(e)
 
     @force_add_message.error
     async def force_add_message_error(self, ctx: commands.Context, error):
@@ -130,9 +130,9 @@ class Helper:
         elif isinstance(error, commands.BadArgument):
             await ctx.send(error)
         else:
-            log.info("FAME")
-            log.info(type(error))
-            log.info(ctx)
+            log.warning("FAME")
+            log.warning(type(error))
+            log.warning(ctx)
             await ctx.send("{} {}".format(type(error), error))
 
     @commands.command(pass_context=True,
