@@ -23,19 +23,21 @@ class Bot(commands.Bot):
         await super().start(*args, **kwargs)
 
 
-inktober = Bot(command_prefix="b!")
+inktober: Bot = Bot(command_prefix="bb!",
+                    owner_id=240973228632178689)
 
 
 @inktober.event
 async def on_ready():
+    log.info("On rewrite")
     log.info(f"Connected at {datetime.datetime.now().strftime('%d %H:%M:%S')}")
     log.info(f"Logged in as {inktober.user.name} {inktober.user.id}")
     log.info("Connected to: ")
 
-    for server in inktober.servers:
+    for server in inktober.guilds:
         log.info(server.name)
 
-    await inktober.change_presence(game=discord.Game(name="Haunting blobkind"), status=None, afk=False)
+    await inktober.change_presence(activity=discord.Game(name="Haunting blobkind"), status=None, afk=False)
 
 
 if __name__ == "__main__":

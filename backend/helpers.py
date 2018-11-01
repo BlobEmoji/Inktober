@@ -1,3 +1,5 @@
+import calendar
+import datetime
 import logging
 
 import asyncpg.exceptions
@@ -6,8 +8,9 @@ from discord.ext import commands
 
 import backend.command_checks
 import backend.config
-import backend.discord_events.on_reaction_add
 import backend.day_themes
+import backend.discord_events.on_reaction_add
+from bot import Bot as Client
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +23,7 @@ async def user_role_authed(member: discord.Member):
         return False
 
 
-async def check_if_in_table(message_id, conn):
+async def check_if_in_table(message_id: int, conn):
     test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from posted_inktober WHERE message_id = $1)""",
                                int(message_id))
     return test
@@ -37,7 +40,8 @@ async def insert_into_table(message_id, user_id, message, conn):
 
 
 async def insert_day(message_id, day, conn):
-    await conn.execute("""UPDATE posted_inktober SET inktober_day = $1 WHERE message_id = $2""", str(day), int(message_id))
+    await conn.execute("""UPDATE posted_inktober SET inktober_day = $1 WHERE message_id = $2""", str(day),
+                       int(message_id))
 
 
 async def fetch_day(message_id, conn):
@@ -59,7 +63,8 @@ async def check_if_in_tracking_table(message_id, conn):
 
 
 async def grab_original_id(embed_id: int, conn):
-    row = await conn.fetchrow("""SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
+    row = await conn.fetchrow(
+        """SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
     try:
         return row["original_id"], row["my_channel_id"]
     except TypeError as TE:
@@ -67,7 +72,9 @@ async def grab_original_id(embed_id: int, conn):
 
 
 async def insert_original_id(embed_id, original_id, channel_id, conn):
-    await conn.execute("""INSERT INTO my_message_to_original (my_message_id, original_id, my_channel_id) VALUES ($1, $2, $3)""", int(embed_id), int(original_id), int(channel_id))
+    await conn.execute(
+        """INSERT INTO my_message_to_original (my_message_id, original_id, my_channel_id) VALUES ($1, $2, $3)""",
+        int(embed_id), int(original_id), int(channel_id))
 
 
 async def fetch_from_tracking_table(message_id, conn):
@@ -78,20 +85,108 @@ async def fetch_from_tracking_table(message_id, conn):
     return row["my_message_id"], row["my_channel_id"]
 
 
+class DayInMonth(commands.Converter):
+    async def convert(self, ctx: commands.Context, argument: str):
+        now: datetime.datetime = datetime.datetime.now()
+        year: int = int(now.strftime("%Y"))
+        month: int = int(now.strftime("%m"))
+        month_data: tuple = calendar.monthrange(year, month)
+        month_range: list = list(range(1, month_data[1] + 1))
+        if int(argument) in month_range:
+            return int(argument)
+        else:
+            raise commands.BadArgument("{} is not a valid day in the current month of {}".format(argument,
+                                                                                                 now.strftime("%B")))
+
+
 class Helper:
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: Client = bot
 
-    @commands.command(pass_context=True, aliases=["fadd"])
+    @commands.command(pass_context=True,
+                      aliases=["fadd"],
+                      brief="Force add a message into the right channel")
     @commands.check(backend.command_checks.is_authed)
-    async def force_add_message(self, ctx: commands.Context):
+    async def force_add_message(self, ctx: commands.Context, channel: discord.TextChannel, message: int):
+        log.info("{} {} {} {}".format(channel, message, type(channel), type(message)))
+        try:
+            fetched_message: discord.Message = await channel.get_message(message)
+        except discord.NotFound as DNF:
+            await ctx.send(DNF)
+            return
+
+        try:
+            await backend.discord_events.on_reaction_add.new_inktober(fetched_message, self.bot)
+            log.info("Forced added {} for {}".format(message, ctx.message.author.id))
+            await ctx.message.add_reaction("\U00002705")
+        except asyncpg.exceptions.UniqueViolationError as e:
+            await ctx.message.add_reaction("\U0000274c")
+            await ctx.message.send(e)
+
+    @force_add_message.error
+    async def force_add_message_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(error)
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+        else:
+            log.info("FAME")
+            log.info(type(error))
+            log.info(ctx)
+            await ctx.send("{} {}".format(type(error), error))
+
+    @commands.command(pass_context=True,
+                      aliases=["fday"],
+                      brief="Force alter the day of a already submitted piece")
+    @commands.check(backend.command_checks.is_authed)
+    async def force_alter_day(self, ctx: commands.Context, channel: discord.TextChannel, message: int, day: DayInMonth):
+        log.info("{} {} {} {} {} {}".format(channel, message, day, type(channel), type(message), type(day)))
+        try:
+            fetched_message: discord.Message = await channel.get_message(message)
+        except discord.NotFound as DNF:
+            await ctx.send(DNF)
+            return
+
+        new_embed: discord.Embed = fetched_message.embeds[0]
+
+        original_message_id, _ = await backend.helpers.grab_original_id(fetched_message.id, self.bot.db)
+        await insert_day(original_message_id, day, self.bot.db)
+
+        new_embed_embed = discord.Embed(timestamp=new_embed.timestamp,
+                                        title="Day {} ({})".format(str(day),
+                                                                   backend.day_themes.day_themes[day]),
+                                        colour=15169815)
+        new_embed_embed.set_image(url=new_embed.image.url)
+        new_embed_embed.set_author(name=new_embed.author.name,
+                                   icon_url=new_embed.author.icon_url)
+
+        await fetched_message.edit(embed=new_embed_embed)
+        await ctx.message.add_reaction("\U00002705")
+        await fetched_message.add_reaction(backend.config.inktober_lock_image_button)
+
+    @force_alter_day.error
+    async def force_alter_day_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(error)
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+        else:
+            log.info("TAE")
+            log.info(type(error))
+            log.info(ctx)
+            await ctx.send("{} {}".format(type(error), error))
+
+    @commands.command(pass_context=True)
+    # @commands.check(backend.command_checks.is_authed)
+    @commands.is_owner()
+    async def _old_force_add_message(self, ctx: commands.Context):
         """
         Forces adds a message into the inktober channel
         if you specify the channel_id message_id
         """
         if len(ctx.message.content.split(" ")) != 3:
-            await self.bot.say("I need a channel ID then a message ID in the format of "
-                               "'command' channel_id message_id")
+            await ctx.send("I need a channel ID then a message ID in the format of "
+                           "'command' channel_id message_id")
             return
 
         channel = ctx.message.content.split(" ")[1]
@@ -99,33 +194,34 @@ class Helper:
 
         fetched_channel = self.bot.get_channel(channel)
         if fetched_channel is None:
-            await self.bot.say("Your first variable was a invalid channel ID")
+            await ctx.send("Your first variable was a invalid channel ID")
             return
 
         try:
-            fetched_message = await self.bot.get_message(fetched_channel, message)
+            fetched_message = await fetched_channel.get_message(fetched_channel, message)
         except discord.NotFound as DNF:
-            await self.bot.say(DNF)
+            await ctx.send(DNF)
             return
 
         try:
             await backend.discord_events.on_reaction_add.new_inktober(fetched_message, self.bot)
             log.info("Forced added {} for {}".format(message, ctx.message.author.id))
-            await self.bot.add_reaction(ctx.message, "\U00002705")
+            await ctx.message.add_reaction("\U00002705")
         except asyncpg.exceptions.UniqueViolationError as e:
-            await self.bot.add_reaction(ctx.message, "\U0000274c")
-            await self.bot.say(e)
+            await ctx.message.add_reaction("\U0000274c")
+            await ctx.message.send(e)
 
-    @commands.command(pass_context=True, aliases=["fday"])
-    @commands.check(backend.command_checks.is_authed)
-    async def force_alter_day(self, ctx: commands.Context):
+    @commands.command(pass_context=True)
+    # @commands.check(backend.command_checks.is_authed)
+    @commands.is_owner()
+    async def _old_force_alter_day(self, ctx: commands.Context):
         """
         Force alters the set day for a already sent inktober post
         if you give it the channel_id message_id date
         """
         if len(ctx.message.content.split(" ")) != 4:
-            await self.bot.say("I need a channel ID then a message ID then a day (as a int) in the format of "
-                               "'command' channel_id message_id day")
+            await ctx.send("I need a channel ID then a message ID then a day (as a int) in the format of "
+                           "'command' channel_id message_id day")
             return
 
         channel = ctx.message.content.split(" ")[1]
@@ -133,36 +229,38 @@ class Helper:
         try:
             day = int(ctx.message.content.split(" ")[3])
         except ValueError as VE:
-            await self.bot.say(f"{VE} | on the day which should be your third variable")
+            await ctx.send(f"{VE} | on the day which should be your third variable")
             return
 
-        fetched_channel = self.bot.get_channel(channel)
+        fetched_channel: discord.TextChannel = ctx.guild.get_channel(int(channel))
         if fetched_channel is None:
-            await self.bot.say("Your first variable was a invalid channel ID")
+            await ctx.send("Your first variable was a invalid channel ID")
             return
 
         try:
-            fetched_message = await self.bot.get_message(fetched_channel, message)
+            fetched_message: discord.Message = await fetched_channel.get_message(int(message))
         except discord.NotFound as DNF:
-            await self.bot.say(DNF)
+            await ctx.send(DNF)
             return
 
-        new_embed = fetched_message.embeds[0]
+        new_embed: discord.Embed = fetched_message.embeds[0]
         log.info(new_embed)
 
         original_message_id, _ = await backend.helpers.grab_original_id(fetched_message.id, self.bot.db)
         await insert_day(original_message_id, day, self.bot.db)
 
-        new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+        new_embed_embed = discord.Embed(timestamp=new_embed.timestamp,
                                         title="Day {} ({})".format(str(day),
                                                                    backend.day_themes.day_themes[day]),
                                         colour=15169815)
-        new_embed_embed.set_image(url=new_embed["image"]["url"])
-        new_embed_embed.set_author(name=new_embed["author"]["name"],
-                                   icon_url=new_embed["author"]["icon_url"])
+        new_embed_embed.set_image(url=new_embed.image.url)
+        new_embed_embed.set_author(name=new_embed.author.name,
+                                   icon_url=new_embed.author.icon_url)
 
-        await self.bot.edit_message(fetched_message, embed=new_embed_embed)
-        await self.bot.add_reaction(ctx.message, "\U00002705")
+        await fetched_message.edit(embed=new_embed_embed)
+        await ctx.message.add_reaction("\U00002705")
+        await fetched_message.add_reaction(backend.config.inktober_lock_image_button)
+
 
 def setup(bot):
     bot.add_cog(Helper(bot))
