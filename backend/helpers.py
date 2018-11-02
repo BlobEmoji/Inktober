@@ -97,6 +97,16 @@ async def fetch_days_of_submissions(user_id: int, conn):
     return days
 
 
+async def find_empty_days(conn):
+    rows = await conn.fetch("""SELECT message_id, user_id from posted_inktober WHERE inktober_day = '' LIMIT 5""")
+    new_rows = []
+    row: asyncpg.Record
+    for row in rows:
+        new_rows.append({"message": row["message_id"],
+                         "author": row["user_id"]})
+    return new_rows
+
+
 class DayInMonth(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str):
         now: datetime.datetime = datetime.datetime.now()
@@ -232,6 +242,29 @@ class Helper:
         embed.add_field(name="Amount", value=submission_amount)
         embed.add_field(name="Days", value=", ".join(str(day) for day in days.split("|")))
         embed.set_author(name=user.name, icon_url=user.avatar_url)
+
+        await ctx.send(embed=embed)
+
+    @commands.command(pass_context=True,
+                      brief="Finds empty days and links message")
+    @commands.check(backend.command_checks.is_authed)
+    async def find_blank(self, ctx: commands.Context):
+        blank_ids = await find_empty_days(self.bot.db)
+        if len(blank_ids) == 0:
+            await ctx.send("None found that are empty")
+            return
+
+        messages_to_fix = []
+        for message_id in blank_ids:
+            my_message_id, my_channel_id = await fetch_from_tracking_table(message_id["message"], self.bot.db)
+            messages_to_fix.append({"link": f"https://discordapp.com/channels/{ctx.guild.id}/{my_channel_id}/{my_message_id}",
+                                    "channel": my_channel_id,
+                                    "message": my_message_id,
+                                    "author": message_id["author"]})
+
+        embed = discord.Embed()
+        for message in messages_to_fix:
+            embed.add_field(name=f"<@!{message['author']}>", value=message["link"])
 
         await ctx.send(embed=embed)
 
