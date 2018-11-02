@@ -95,12 +95,12 @@ class OnReactionEvent:
 
                     if reaction.emoji == "⏺":
                         day = now_day
-                        await backend.helpers.insert_day(original_message_id, now_day, self.bot.db)
+                        await backend.helpers.insert_day(original_message_id, day, self.bot.db)
                         await message.add_reaction(backend.config.inktober_lock_image_button)
 
                     elif reaction.emoji == "▶":
                         day = now_day + 1
-                        await backend.helpers.insert_day(original_message_id, now_day + 1, self.bot.db)
+                        await backend.helpers.insert_day(original_message_id, day, self.bot.db)
                         await message.add_reaction(backend.config.inktober_lock_image_button)
 
                     elif reaction.emoji == "◀":
@@ -114,7 +114,7 @@ class OnReactionEvent:
                             else:
                                 month_data: tuple = calendar.monthrange(year, month - 1)
                             day = month_data[1]
-                        await backend.helpers.insert_day(original_message_id, now_day - 1, self.bot.db)
+                        await backend.helpers.insert_day(original_message_id, day, self.bot.db)
                         await message.add_reaction(backend.config.inktober_lock_image_button)
 
                     else:
