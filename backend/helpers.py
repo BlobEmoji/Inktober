@@ -40,6 +40,7 @@ async def insert_into_table(message_id, user_id, message, conn):
 
 
 async def insert_day(message_id, day, conn):
+    log.info("{} {}".format(message_id, day))
     await conn.execute("""UPDATE posted_inktober SET inktober_day = $1 WHERE message_id = $2""", str(day),
                        int(message_id))
 

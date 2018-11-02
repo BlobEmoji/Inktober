@@ -1,6 +1,7 @@
 import datetime
 import logging
 import calendar
+from typing import Union
 
 import discord
 import discord.errors
@@ -55,7 +56,17 @@ async def new_inktober(message: discord.Message, bot: Client):
                                              message.channel.id, bot.db)
 
 
-async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction, bot: Client, raw: bool):
+async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Reaction, discord.PartialEmoji], bot: Client, raw: bool, message: discord.Message = None):
+    custom_emoji: bool
+    if raw:
+        custom_emoji = reaction.is_custom_emoji()
+        reaction_name = reaction_emoji = reaction.name
+    else:
+        custom_emoji = reaction.custom_emoji
+        reaction_emoji = reaction.emoji
+        if custom_emoji:
+            reaction_name = reaction.emoji.name
+
     if raw:
         log.info("Is raw")
     else:
@@ -67,17 +78,22 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
         log.info("User not authed {} | {} {}".format(user.id, user.display_name, reaction.message.id))
         return
 
-    message: discord.Message = reaction.message
+    if not raw:
+        message: discord.Message = reaction.message
 
     if await location_check(message):
         try:
-            log.info("{} {} {} ".format(message.attachments, reaction.custom_emoji, reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes))
+            log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes))
         except AttributeError:
-            log.info("AE")
-            log.info("{} {} {} ".format(message.attachments, reaction.custom_emoji, reaction.emoji in backend.config.inktober_custom_accept_emotes))
+            if isinstance(reaction, discord.Reaction):
+                log.info("AE")
+                log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.emoji in backend.config.inktober_custom_accept_emotes))
+            else:
+                log.info("AE")
+                log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.name in backend.config.inktober_custom_accept_emotes))
         if message.attachments != []:
-            if reaction.custom_emoji:
-                if reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes:
+            if custom_emoji:
+                if reaction_name.lower() in backend.config.inktober_custom_accept_emotes:
                     if not await backend.helpers.check_if_in_table(message.id, bot.db):
                         log.info("Added new inktober {}".format(message.id))
                         await new_inktober(message, bot)
@@ -86,7 +102,7 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
         else:
             log.info("No attachments")
 
-        if reaction.emoji in backend.config.date_buttons:
+        if reaction_emoji in backend.config.date_buttons:
             log.info("Date buttons")
             if message.author == bot.user:
                 now_embed: discord.Embed = message.embeds[0]
@@ -94,17 +110,17 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
                 now_day = int(now_time.strftime("%d"))
                 original_message_id, _ = await backend.helpers.grab_original_id(message.id, bot.db)
 
-                if reaction.emoji == "⏺":
+                if reaction_emoji == "⏺":
                     day = now_day
                     await backend.helpers.insert_day(original_message_id, day, bot.db)
                     await message.add_reaction(backend.config.inktober_lock_image_button)
 
-                elif reaction.emoji == "▶":
+                elif reaction_emoji == "▶":
                     day = now_day + 1
                     await backend.helpers.insert_day(original_message_id, day, bot.db)
                     await message.add_reaction(backend.config.inktober_lock_image_button)
 
-                elif reaction.emoji == "◀":
+                elif reaction_emoji == "◀":
                     day = now_day - 1
                     if day == 0:
                         now: datetime.datetime = datetime.datetime.now()
@@ -120,7 +136,7 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
 
                 else:
                     day = now_day
-                    log.warning("How did this happen? {} | {}".format(message.id, reaction.emoji))
+                    log.warning("How did this happen? {} | {}".format(message.id, reaction_emoji))
 
                 message_to_update = message
                 new_embed: discord.Embed = message_to_update.embeds[0]
@@ -134,8 +150,8 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
                                            icon_url=new_embed.author.icon_url)
 
                 await message_to_update.edit(embed=new_embed_embed)
-        elif reaction.emoji == backend.config.inktober_lock_image_button:
-            log.info("{}".format(await backend.helpers.fetch_day(message.id, bot.db)))
+        elif reaction_emoji == backend.config.inktober_lock_image_button:
+            log.info("Day '{}'".format(await backend.helpers.fetch_day(message.id, bot.db)))
             if await backend.helpers.fetch_day(message.id, bot.db) != "":
                 log.info("Locking {}".format(message.id))
                 try:
@@ -148,6 +164,8 @@ async def on_reaction_add_main(user: discord.Member, reaction: discord.Reaction,
                     log.info("HTTPException: {}".format(HTTP))
                     for emoji in backend.config.all_inktober_buttons:
                         await message.remove_reaction(emoji, bot.user)
+        else:
+            log.info("{} {}".format(reaction_emoji == backend.config.inktober_lock_image_button, reaction_emoji))
     else:
         log.info("{} {}".format(message.guild.id == backend.config.inktober_server, message.channel.id in backend.config.inktober_authed_channels))
 
