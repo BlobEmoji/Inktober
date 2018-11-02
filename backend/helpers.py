@@ -85,6 +85,18 @@ async def fetch_from_tracking_table(message_id, conn):
     return row["my_message_id"], row["my_channel_id"]
 
 
+async def count_author_submissions(user_id: int, conn):
+    count = await conn.fetchval(
+        """SELECT count(*) from posted_inktober where user_id = $1""", user_id)
+    return count
+
+
+async def fetch_days_of_submissions(user_id: int, conn):
+    days = await conn.fetchval(
+        """SELECT string_agg(inktober_day, '|') FROM posted_inktober WHERE user_id = $1""", user_id)
+    return days
+
+
 class DayInMonth(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str):
         now: datetime.datetime = datetime.datetime.now()
@@ -175,6 +187,53 @@ class Helper:
             log.info(type(error))
             log.info(ctx)
             await ctx.send("{} {}".format(type(error), error))
+
+    @commands.command(pass_context=True,
+                      aliases=["foriginal"],
+                      brief="Allows you to find the posted inktober from the original message id")
+    @commands.check(backend.command_checks.is_authed)
+    async def find_original(self, ctx: commands.Context, channel: discord.TextChannel, message: int):
+        try:
+            fetched_message: discord.Message = await channel.get_message(message)
+        except discord.NotFound as DNF:
+            await ctx.send(DNF)
+            return
+
+        try:
+            my_message_id, my_channel_id = await fetch_from_tracking_table(message, self.bot.db)
+        except TypeError as TE:
+            log.warning("find_original | {} | {} {}".format(TE, channel.id, message))
+            await ctx.send("That message from that channel was not found in the DB")
+        else:
+            await ctx.send("https://discordapp.com/channels/{}/{}/{}".format(ctx.guild.id,
+                                                                             my_channel_id,
+                                                                             my_message_id))
+
+    @find_original.error
+    async def find_original_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(error)
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+        else:
+            log.info("FOE")
+            log.info(type(error))
+            log.info(ctx)
+            await ctx.send("{} {}".format(type(error), error))
+
+    @commands.command(pass_context=True,
+                      brief="Given a user find the amount of posts + what day")
+    @commands.check(backend.command_checks.is_authed)
+    async def inktober_info(self, ctx: commands.Context, user: discord.Member):
+        submission_amount = await count_author_submissions(user.id, self.bot.db)
+        days = await fetch_days_of_submissions(user.id, self.bot.db)
+
+        embed = discord.Embed(colour=15169815)
+        embed.add_field(name="Amount", value=submission_amount)
+        embed.add_field(name="Days", value=", ".join(str(day) for day in days.split("|")))
+        embed.set_author(name=user.name, icon_url=user.avatar_url)
+
+        await ctx.send(embed=embed)
 
     @commands.command(pass_context=True)
     # @commands.check(backend.command_checks.is_authed)
