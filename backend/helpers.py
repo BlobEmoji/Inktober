@@ -137,6 +137,10 @@ class Helper:
             await ctx.send(DNF)
             return
 
+        if fetched_message.author == self.bot.user:
+            await ctx.send("Why are you trying to add a message from me?")
+            return
+
         try:
             await backend.discord_events.on_reaction_add.new_inktober(fetched_message, self.bot)
             log.info("Forced added {} for {}".format(message, ctx.message.author.id))
