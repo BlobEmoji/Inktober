@@ -1,10 +1,11 @@
+import calendar
 import datetime
 import logging
-import calendar
 from typing import Union
 
 import discord
 import discord.errors
+from discord.ext import commands
 
 import backend.config
 import backend.day_themes
@@ -56,7 +57,8 @@ async def new_inktober(message: discord.Message, bot: Client):
                                              message.channel.id, bot.db)
 
 
-async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Reaction, discord.PartialEmoji], bot: Client, raw: bool, message: discord.Message = None):
+async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Reaction, discord.PartialEmoji],
+                               bot: Client, raw: bool, message: discord.Message = None):
     custom_emoji: bool
     if raw:
         custom_emoji = reaction.is_custom_emoji()
@@ -75,7 +77,10 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
     if user == bot.user:
         return
     if not await backend.helpers.user_role_authed(user):
-        log.info("User not authed {} | {} {}".format(user.id, user.display_name, reaction.message.id))
+        if isinstance(reaction, discord.Reaction):
+            log.info("User not authed {} | {} {}".format(user.id, user.display_name, reaction.message.id))
+        else:
+            log.info("User not authed {} | {} {}".format(user.id, user.display_name, message.id))
         return
 
     if not raw:
@@ -83,14 +88,17 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
 
     if await location_check(message):
         try:
-            log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes))
+            log.info("{} {} {} ".format(message.attachments, custom_emoji,
+                                        reaction.emoji.name.lower() in backend.config.inktober_custom_accept_emotes))
         except AttributeError:
             if isinstance(reaction, discord.Reaction):
                 log.info("AE")
-                log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.emoji in backend.config.inktober_custom_accept_emotes))
+                log.info("{} {} {} ".format(message.attachments, custom_emoji,
+                                            reaction.emoji in backend.config.inktober_custom_accept_emotes))
             else:
                 log.info("AE")
-                log.info("{} {} {} ".format(message.attachments, custom_emoji, reaction.name in backend.config.inktober_custom_accept_emotes))
+                log.info("{} {} {} ".format(message.attachments, custom_emoji,
+                                            reaction.name in backend.config.inktober_custom_accept_emotes))
         if message.attachments != []:
             if custom_emoji:
                 if reaction_name.lower() in backend.config.inktober_custom_accept_emotes:
@@ -167,10 +175,11 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
         else:
             log.info("{} {}".format(reaction_emoji == backend.config.inktober_lock_image_button, reaction_emoji))
     else:
-        log.info("{} {}".format(message.guild.id == backend.config.inktober_server, message.channel.id in backend.config.inktober_authed_channels))
+        log.info("{} {}".format(message.guild.id == backend.config.inktober_server,
+                                message.channel.id in backend.config.inktober_authed_channels))
 
 
-class OnReactionEvent:
+class OnReactionEvent(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 

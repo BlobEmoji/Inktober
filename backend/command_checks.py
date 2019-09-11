@@ -1,6 +1,7 @@
+from discord.ext import commands
+
 import backend.config
 from bot import Bot as Client
-from discord.ext import commands
 
 
 async def is_authed(ctx: commands.Context):
@@ -11,7 +12,7 @@ async def is_authed(ctx: commands.Context):
         return False
 
 
-class CommandChecks:
+class CommandChecks(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 

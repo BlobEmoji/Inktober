@@ -2,16 +2,17 @@ import logging
 
 import discord
 import discord.state
+from discord.ext import commands
 
 import backend.config
+import backend.discord_events.on_reaction_add
 import backend.helpers
 from bot import Bot as Client
-import backend.discord_events.on_reaction_add
 
 log = logging.getLogger(__name__)
 
 
-class OnRawReactionAdd:
+class OnRawReactionAdd(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 

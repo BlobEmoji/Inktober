@@ -9,7 +9,7 @@ from bot import Bot as Client
 log = logging.getLogger(__name__)
 
 
-class Errors:
+class Errors(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 

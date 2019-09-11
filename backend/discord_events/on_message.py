@@ -1,7 +1,9 @@
+from discord.ext import commands
+
 from bot import Bot as Client
 
 
-class OnMessageEvent:
+class OnMessageEvent(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 

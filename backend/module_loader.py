@@ -1,8 +1,9 @@
 import logging
 import traceback
-from bot import Bot as Client
 
 from discord.ext import commands
+
+from bot import Bot as Client
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ startup_extensions = ["backend.discord_events.on_message", "backend.discord_even
                       "backend.command_checks", "backend.helpers", "backend.errors"]
 
 
-class ModuleLoader:
+class ModuleLoader(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
         self.setup()

@@ -122,7 +122,7 @@ class DayInMonth(commands.Converter):
                                                                                                  now.strftime("%B")))
 
 
-class Helper:
+class Helper(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 
@@ -262,10 +262,11 @@ class Helper:
         messages_to_fix = []
         for message_id in blank_ids:
             my_message_id, my_channel_id = await fetch_from_tracking_table(message_id["message"], self.bot.db)
-            messages_to_fix.append({"link": f"https://discordapp.com/channels/{ctx.guild.id}/{my_channel_id}/{my_message_id}",
-                                    "channel": my_channel_id,
-                                    "message": my_message_id,
-                                    "author": message_id["author"]})
+            messages_to_fix.append(
+                {"link": f"https://discordapp.com/channels/{ctx.guild.id}/{my_channel_id}/{my_message_id}",
+                 "channel": my_channel_id,
+                 "message": my_message_id,
+                 "author": message_id["author"]})
 
         embed = discord.Embed()
         for message in messages_to_fix:

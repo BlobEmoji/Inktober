@@ -2,6 +2,7 @@ import logging
 
 import discord
 import discord.utils
+from discord.ext import commands
 
 import backend.helpers
 from bot import Bot as Client
@@ -9,7 +10,7 @@ from bot import Bot as Client
 log = logging.getLogger(__name__)
 
 
-class OnMessageEditEvent:
+class OnMessageEditEvent(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 
@@ -21,7 +22,8 @@ class OnMessageEditEvent:
                     log.info("In the channels")
                     if await backend.helpers.check_if_in_tracking_table(before.id, self.bot.db):
                         log.info("Is tracked")
-                        message_id_to_update, my_message_channel_id = await backend.helpers.fetch_from_tracking_table(before.id, self.bot.db)
+                        message_id_to_update, my_message_channel_id = await backend.helpers.fetch_from_tracking_table(
+                            before.id, self.bot.db)
 
                         my_channel = before.guild.get_channel(str(my_message_channel_id))
 
@@ -35,7 +37,8 @@ class OnMessageEditEvent:
                                                         colour=15169815)
 
                         new_embed_embed.set_image(url=new_embed["image"]["url"])
-                        new_embed_embed.set_author(name=new_embed["author"]["name"], icon_url=new_embed["author"]["icon_url"])
+                        new_embed_embed.set_author(name=new_embed["author"]["name"],
+                                                   icon_url=new_embed["author"]["icon_url"])
                         await message_to_update.edit(embed=new_embed_embed)
                     else:
                         log.info("not in the channels")
