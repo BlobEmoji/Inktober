@@ -25,6 +25,7 @@ class Bot(commands.Bot):
 
 inktober: Bot = Bot(command_prefix="b!",
                     owner_id=240973228632178689)
+inktober.load_extension("jishaku")
 
 
 @inktober.event
