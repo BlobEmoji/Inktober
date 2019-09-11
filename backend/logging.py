@@ -50,6 +50,7 @@ def setup_logging():
 
         for name in SILENCED_LOGGERS:
             logging.getLogger(name).setLevel(logging.INFO)
+        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
         yield
     finally:
