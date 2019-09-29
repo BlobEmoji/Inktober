@@ -16,6 +16,7 @@ class OnRawReactionAdd(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         guild: discord.Guild = self.bot.get_guild(payload.guild_id)
         channel: discord.TextChannel = guild.get_channel(payload.channel_id)

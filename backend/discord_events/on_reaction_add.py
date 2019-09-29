@@ -183,6 +183,7 @@ class OnReactionEvent(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
 
+    @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.Member):
         await on_reaction_add_main(user, reaction, self.bot, False)
 
