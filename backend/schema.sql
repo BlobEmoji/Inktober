@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS posted_inktober(
 );
 
 CREATE TABLE IF NOT EXISTS my_posts_to_original (
-    original_id BIGINT PRIMARY KEY,
+    original_id BIGINT PRIMARY KEY REFERENCES posted_inktober(message_id),
     my_message_id BIGINT,
     my_channel_id BIGINT
 );

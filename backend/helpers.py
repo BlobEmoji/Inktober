@@ -45,15 +45,17 @@ async def insert_day(message_id, day, conn):
     UPDATE posted_inktober 
     SET inktober_day = $1 
     WHERE message_id = $2
-    """, str(day), int(message_id))
+    """, str(day), message_id)
 
 
 async def fetch_day(message_id, conn):
+    log.info(f"fetch_day {message_id}")
     day = await conn.fetchval("""
-    SELECT inktober_day 
-    FROM posted_inktober 
-    WHERE message_id = $1
-    """, int(message_id))
+    SELECT pi.inktober_day
+    FROM my_posts_to_original 
+    LEFT JOIN posted_inktober pi on my_posts_to_original.original_id = pi.message_id 
+    WHERE my_message_id = $1
+    """, message_id)
     return day
 
 
