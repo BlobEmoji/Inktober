@@ -21,7 +21,7 @@ class OnRawReactionAdd(commands.Cog):
         guild: discord.Guild = self.bot.get_guild(payload.guild_id)
         channel: discord.TextChannel = guild.get_channel(payload.channel_id)
         user: discord.Member = guild.get_member(payload.user_id)
-        message: discord.Message = await channel.get_message(payload.message_id)
+        message: discord.Message = await channel.fetch_message(payload.message_id)
 
         cache = message._state._messages
         if discord.utils.get(cache, id=message.id) is None:
