@@ -156,7 +156,7 @@ class Helper(commands.Cog):
         try:
             fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
-            await ctx.send(DNF)
+            await ctx.send(str(DNF))
             return
 
         if fetched_message.author == self.bot.user:
@@ -169,14 +169,14 @@ class Helper(commands.Cog):
             await ctx.message.add_reaction("\U00002705")
         except asyncpg.exceptions.UniqueViolationError as e:
             await ctx.message.add_reaction("\U0000274c")
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @force_add_message.error
     async def force_add_message_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         else:
             log.warning("FAME")
             log.warning(type(error))
@@ -192,7 +192,7 @@ class Helper(commands.Cog):
         try:
             fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
-            await ctx.send(DNF)
+            await ctx.send(str(DNF))
             return
 
         new_embed: discord.Embed = fetched_message.embeds[0]
@@ -215,9 +215,9 @@ class Helper(commands.Cog):
     @force_alter_day.error
     async def force_alter_day_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         else:
             log.info("TAE")
             log.info(type(error))
@@ -232,7 +232,7 @@ class Helper(commands.Cog):
         try:
             fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
-            await ctx.send(DNF)
+            await ctx.send(str(DNF))
             return
 
         try:
@@ -248,9 +248,9 @@ class Helper(commands.Cog):
     @find_original.error
     async def find_original_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(error)
+            await ctx.send(str(error))
         else:
             log.info("FOE")
             log.info(type(error))
@@ -319,7 +319,7 @@ class Helper(commands.Cog):
         try:
             fetched_message = await fetched_channel.get_message(fetched_channel, message)
         except discord.NotFound as DNF:
-            await ctx.send(DNF)
+            await ctx.send(str(DNF))
             return
 
         try:
@@ -359,7 +359,7 @@ class Helper(commands.Cog):
         try:
             fetched_message: discord.Message = await fetched_channel.fetch_message(int(message))
         except discord.NotFound as DNF:
-            await ctx.send(DNF)
+            await ctx.send(str(DNF))
             return
 
         new_embed: discord.Embed = fetched_message.embeds[0]
