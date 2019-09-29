@@ -5,3 +5,4 @@ backend/config.py
 *.pyc
 **/data
 **/venv
+.idea
