@@ -40,32 +40,44 @@ async def insert_into_table(message_id, user_id, message, conn):
 
 
 async def insert_day(message_id, day, conn):
-    log.info("{} {}".format(message_id, day))
-    await conn.execute("""UPDATE posted_inktober SET inktober_day = $1 WHERE message_id = $2""", str(day),
-                       int(message_id))
+    log.info("Inserted day, {} {}".format(message_id, day))
+    await conn.execute("""
+    UPDATE posted_inktober 
+    SET inktober_day = $1 
+    WHERE message_id = $2
+    """, str(day), int(message_id))
 
 
 async def fetch_day(message_id, conn):
-    day = await conn.fetchval("""SELECT inktober_day FROM posted_inktober WHERE message_id = $1""", int(message_id))
+    day = await conn.fetchval("""
+    SELECT inktober_day 
+    FROM posted_inktober 
+    WHERE message_id = $1
+    """, int(message_id))
     return day
 
 
 async def insert_into_message_origin_tracking(message_id, my_message_id, channel_id, conn):
     log.info("Inserted {} | {} into tracker".format(message_id, my_message_id))
-    await conn.execute(
-        """INSERT INTO my_posts_to_original (original_id, my_message_id, my_channel_id) VALUES($1, $2, $3)""",
-        int(message_id), int(my_message_id), int(channel_id))
+    await conn.execute("""
+    INSERT INTO my_posts_to_original (original_id, my_message_id, my_channel_id) 
+    VALUES($1, $2, $3)""", int(message_id), int(my_message_id), int(channel_id))
 
 
 async def check_if_in_tracking_table(message_id, conn):
-    test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from my_posts_to_original WHERE original_id = $1)""",
-                               int(message_id))
+    test = await conn.fetchval("""
+    SELECT EXISTS (
+    SELECT 1 
+    FROM my_posts_to_original 
+    WHERE original_id = $1)""", int(message_id))
     return test
 
 
 async def grab_original_id(embed_id: int, conn):
-    row = await conn.fetchrow(
-        """SELECT original_id, my_channel_id FROM my_message_to_original WHERE my_message_id = $1""", int(embed_id))
+    row = await conn.fetchrow("""
+    SELECT original_id, my_channel_id 
+    FROM my_message_to_original 
+    WHERE my_message_id = $1""", int(embed_id))
     try:
         return row["original_id"], row["my_channel_id"]
     except TypeError as TE:
@@ -73,33 +85,42 @@ async def grab_original_id(embed_id: int, conn):
 
 
 async def insert_original_id(embed_id, original_id, channel_id, conn):
-    await conn.execute(
-        """INSERT INTO my_message_to_original (my_message_id, original_id, my_channel_id) VALUES ($1, $2, $3)""",
-        int(embed_id), int(original_id), int(channel_id))
+    await conn.execute("""
+    INSERT INTO my_message_to_original (my_message_id, original_id, my_channel_id) 
+    VALUES ($1, $2, $3)""", int(embed_id), int(original_id), int(channel_id))
 
 
 async def fetch_from_tracking_table(message_id, conn):
-    row = await conn.fetchrow(
-        """SELECT my_message_id, my_channel_id FROM my_posts_to_original WHERE original_id = $1""",
-        int(message_id))
-    log.info("{}".format(row))
+    row = await conn.fetchrow("""
+    SELECT my_message_id, my_channel_id 
+    FROM my_posts_to_original 
+    WHERE original_id = $1""", int(message_id))
+    log.info("Fetched Tracking Table: {}".format(row))
     return row["my_message_id"], row["my_channel_id"]
 
 
 async def count_author_submissions(user_id: int, conn):
-    count = await conn.fetchval(
-        """SELECT count(*) from posted_inktober where user_id = $1""", user_id)
+    count = await conn.fetchval("""
+    SELECT count(*) 
+    FROM posted_inktober 
+    WHERE user_id = $1""", user_id)
     return count
 
 
 async def fetch_days_of_submissions(user_id: int, conn):
-    days = await conn.fetchval(
-        """SELECT string_agg(inktober_day, '|') FROM posted_inktober WHERE user_id = $1""", user_id)
+    days = await conn.fetchval("""
+    SELECT string_agg(inktober_day, '|') 
+    FROM posted_inktober 
+    WHERE user_id = $1""", user_id)
     return days
 
 
 async def find_empty_days(conn):
-    rows = await conn.fetch("""SELECT message_id, user_id from posted_inktober WHERE inktober_day = '' LIMIT 5""")
+    rows = await conn.fetch("""
+    SELECT message_id, user_id 
+    FROM posted_inktober 
+    WHERE inktober_day = '' 
+    LIMIT 5""")
     new_rows = []
     row: asyncpg.Record
     for row in rows:
@@ -133,7 +154,7 @@ class Helper(commands.Cog):
     async def force_add_message(self, ctx: commands.Context, channel: discord.TextChannel, message: int):
         log.info("{} {} {} {}".format(channel, message, type(channel), type(message)))
         try:
-            fetched_message: discord.Message = await channel.get_message(message)
+            fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
             await ctx.send(DNF)
             return
@@ -169,7 +190,7 @@ class Helper(commands.Cog):
     async def force_alter_day(self, ctx: commands.Context, channel: discord.TextChannel, message: int, day: DayInMonth):
         log.info("{} {} {} {} {} {}".format(channel, message, day, type(channel), type(message), type(day)))
         try:
-            fetched_message: discord.Message = await channel.get_message(message)
+            fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
             await ctx.send(DNF)
             return
@@ -209,7 +230,7 @@ class Helper(commands.Cog):
     @commands.check(backend.command_checks.is_authed)
     async def find_original(self, ctx: commands.Context, channel: discord.TextChannel, message: int):
         try:
-            fetched_message: discord.Message = await channel.get_message(message)
+            fetched_message: discord.Message = await channel.fetch_message(message)
         except discord.NotFound as DNF:
             await ctx.send(DNF)
             return
@@ -336,7 +357,7 @@ class Helper(commands.Cog):
             return
 
         try:
-            fetched_message: discord.Message = await fetched_channel.get_message(int(message))
+            fetched_message: discord.Message = await fetched_channel.fetch_message(int(message))
         except discord.NotFound as DNF:
             await ctx.send(DNF)
             return
