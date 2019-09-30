@@ -59,6 +59,17 @@ async def fetch_day(message_id, conn):
     return day
 
 
+async def fetch_intended_user(message_id, conn):
+    log.info(f"fetch_day {message_id}")
+    day = await conn.fetchval("""
+    SELECT pi.user_id
+    FROM my_posts_to_original 
+    LEFT JOIN posted_inktober pi on my_posts_to_original.original_id = pi.message_id 
+    WHERE my_message_id = $1
+    """, message_id)
+    return day
+
+
 async def insert_into_message_origin_tracking(message_id, my_message_id, channel_id, conn):
     log.info("Inserted {} | {} into tracker".format(message_id, my_message_id))
     await conn.execute("""

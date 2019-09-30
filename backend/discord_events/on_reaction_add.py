@@ -10,6 +10,7 @@ from discord.ext import commands
 import backend.config
 import backend.day_themes
 import backend.helpers
+import backend.sheets.sheets
 from bot import Bot as Client
 
 log = logging.getLogger(__name__)
@@ -60,6 +61,10 @@ async def new_inktober(message: discord.Message, bot: Client):
 async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Reaction, discord.PartialEmoji],
                                bot: Client, raw: bool, message: discord.Message = None):
     custom_emoji: bool
+
+    if user == bot.user:
+        return
+
     if raw:
         custom_emoji = reaction.is_custom_emoji()
         reaction_name = reaction_emoji = reaction.name
@@ -74,8 +79,6 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
     else:
         log.info("Not raw")
 
-    if user == bot.user:
-        return
     if not await backend.helpers.user_role_authed(user):
         if isinstance(reaction, discord.Reaction):
             log.info("User not authed {} | {} {}".format(user.id, user.display_name, reaction.message.id))
@@ -148,7 +151,7 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
 
                 message_to_update = message
                 new_embed: discord.Embed = message_to_update.embeds[0]
-                log.info(new_embed)
+                log.info(new_embed.to_dict())
                 new_embed_embed = discord.Embed(timestamp=new_embed.timestamp,
                                                 title="Day {} ({})".format(str(day),
                                                                            backend.day_themes.day_themes[day]),
@@ -159,8 +162,8 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
 
                 await message_to_update.edit(embed=new_embed_embed)
         elif reaction_emoji == backend.config.inktober_lock_image_button:
-            log.info("Day '{}'".format(await backend.helpers.fetch_day(message.id, bot.db)))
-            if await backend.helpers.fetch_day(message.id, bot.db) != "":
+            day = await backend.helpers.fetch_day(message.id, bot.db)
+            if day != "":
                 log.info("Locking {}".format(message.id))
                 try:
                     await message.clear_reactions()
@@ -172,6 +175,21 @@ async def on_reaction_add_main(user: discord.Member, reaction: Union[discord.Rea
                     log.info("HTTPException: {}".format(HTTP))
                     for emoji in backend.config.all_inktober_buttons:
                         await message.remove_reaction(emoji, bot.user)
+
+                intended_user = await backend.helpers.fetch_intended_user(message.id, bot.db)
+                intended_user: discord.Member = message.guild.get_member(intended_user)
+                sheets_users = backend.sheets.sheets.fetch_users()
+                if str(intended_user.id) in sheets_users:
+                    old_days = backend.sheets.sheets.fetch_user_days(str(intended_user.id), sheets_users)
+                    await backend.sheets.sheets.update_days(str(intended_user.id), sheets_users, day, old_days, bot)
+                    if len(old_days[0].split(" ")) + 1 == 10:
+                        await intended_user.add_roles(message.guild.get_role(628014126953791498))
+                        backend.sheets.sheets.say_that_roles_added(str(intended_user.id), sheets_users)
+                else:
+                    backend.sheets.sheets.insert_user_days(intended_user.id,
+                                                           sheets_users,
+                                                           await backend.helpers.fetch_day(message.id, bot.db),
+                                                           f"{intended_user.name}#{intended_user.discriminator}")
         else:
             log.info("{} {}".format(reaction_emoji == backend.config.inktober_lock_image_button, reaction_emoji))
     else:

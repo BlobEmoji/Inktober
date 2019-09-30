@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 startup_extensions = ["backend.discord_events.on_message", "backend.discord_events.on_reaction_add",
                       "backend.discord_events.on_message_edit", "backend.discord_events.on_raw_reaction_add",
-                      "backend.command_checks", "backend.helpers", "backend.errors"]
+                      "backend.command_checks", "backend.helpers", "backend.errors", "backend.sheets.sheets"]
 
 
 class ModuleLoader(commands.Cog):
@@ -29,11 +29,20 @@ class ModuleLoader(commands.Cog):
     @commands.command(pass_context=True)
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, extension: str):
-        if ctx.message.author.id == 240973228632178689:
-            """Reload extensions."""
-            await self.backend(ctx, 'reload', extension)
-        else:
-            await ctx.message.add_reaction("\U0000274c")
+        """Reload extensions."""
+        await self.backend(ctx, 'reload', extension)
+
+    @commands.command(pass_context=True)
+    @commands.is_owner()
+    async def unload(self, ctx: commands.Context, extension: str):
+        """Reload extensions."""
+        await self.backend(ctx, 'unload', extension)
+
+    @commands.command(pass_context=True)
+    @commands.is_owner()
+    async def load(self, ctx: commands.Context, extension: str):
+        """Reload extensions."""
+        await self.backend(ctx, 'load', extension)
 
     async def backend(self, ctx: commands.Context, action, extension):
         """
