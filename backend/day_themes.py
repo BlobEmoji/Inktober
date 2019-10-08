@@ -29,5 +29,5 @@ day_themes = {
     28: "Ride",
     29: "Injured",
     30: "Catch",
-    31: "Ripe"
+    31: "Ripe",
 }

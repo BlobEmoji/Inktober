@@ -24,11 +24,9 @@ class OnRawReactionAdd(commands.Cog):
         cache = message._state._messages
         if discord.utils.get(cache, id=message.id) is None:
             log.info("{} {} {} {}".format(guild, channel, user, message))
-            await on_reaction_add.on_reaction_add_main(user,
-                                                       payload.emoji,
-                                                       self.bot,
-                                                       True,
-                                                       message)
+            await on_reaction_add.on_reaction_add_main(
+                user, payload.emoji, self.bot, True, message
+            )
 
 
 def setup(bot):
