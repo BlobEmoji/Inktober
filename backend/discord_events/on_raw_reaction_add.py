@@ -4,10 +4,8 @@ import discord
 import discord.state
 from discord.ext import commands
 
-import backend.config
-import backend.discord_events.on_reaction_add
-import backend.helpers
 from bot import Bot as Client
+from . import on_reaction_add
 
 log = logging.getLogger(__name__)
 
@@ -26,11 +24,11 @@ class OnRawReactionAdd(commands.Cog):
         cache = message._state._messages
         if discord.utils.get(cache, id=message.id) is None:
             log.info("{} {} {} {}".format(guild, channel, user, message))
-            await backend.discord_events.on_reaction_add.on_reaction_add_main(user,
-                                                                              payload.emoji,
-                                                                              self.bot,
-                                                                              True,
-                                                                              message)
+            await on_reaction_add.on_reaction_add_main(user,
+                                                       payload.emoji,
+                                                       self.bot,
+                                                       True,
+                                                       message)
 
 
 def setup(bot):

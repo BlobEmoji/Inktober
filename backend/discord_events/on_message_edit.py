@@ -3,6 +3,7 @@ import logging
 import discord
 import discord.utils
 from discord.ext import commands
+import backend.config
 
 import backend.helpers
 from bot import Bot as Client
@@ -17,8 +18,8 @@ class OnMessageEditEvent(commands.Cog):
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         if before.content != after.content:
             log.info("!=")
-            if before.guild.id == "272885620769161216":
-                if before.channel.id in ["493851049942319114", "411929226066001930"]:
+            if before.guild.id == backend.config.inktober_guild_id:
+                if before.channel.id in [backend.config.inktober_submit_channel, backend.config.bot_spam_channel]:
                     log.info("In the channels")
                     if await backend.helpers.check_if_in_tracking_table(before.id, self.bot.db):
                         log.info("Is tracked")
