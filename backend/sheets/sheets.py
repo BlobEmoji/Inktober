@@ -36,15 +36,15 @@ class Sheets(commands.Cog):
     async def channel_description(self):
         now_day = int(datetime.datetime.now().strftime("%d"))
         channel: discord.TextChannel = self.bot.get_channel(628013530888667157)
-        await channel.edit(reason="Time passed", topic={f"Currently accepting "
-                                                        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
-                                                        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
-                                                        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}"})
+        await channel.edit(reason="Time passed", topic=f"Currently accepting "
+        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
+        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
+        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}")
         channel: discord.TextChannel = self.bot.get_channel(628013545946218536)
-        await channel.edit(reason="Time passed", topic={f"Currently accepting "
-                                                        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
-                                                        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
-                                                        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}"})
+        await channel.edit(reason="Time passed", topic=f"Currently accepting "
+        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
+        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
+        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}")
 
 
 def setup(bot):
