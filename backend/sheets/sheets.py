@@ -29,6 +29,9 @@ class Sheets(commands.Cog):
         self.bot: Client = bot
         self.channel_description.start()
 
+    def cog_unload(self):
+        self.channel_description.cancel()
+
     @tasks.loop(hours=1)
     async def channel_description(self):
         now_day = int(datetime.datetime.now().strftime("%d"))
