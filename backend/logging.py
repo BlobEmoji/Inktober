@@ -28,7 +28,7 @@ import contextlib
 import logging
 
 # modules which have spammy or not useful logs on DEBUG
-SILENCED_LOGGERS = ('discord', 'PIL', 'websockets')
+SILENCED_LOGGERS = ("discord", "PIL", "websockets")
 
 
 @contextlib.contextmanager
@@ -40,7 +40,8 @@ def setup_logging():
         root.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(
-            '[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S'
+            "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
         handler = logging.StreamHandler()
@@ -50,7 +51,7 @@ def setup_logging():
 
         for name in SILENCED_LOGGERS:
             logging.getLogger(name).setLevel(logging.INFO)
-        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+        logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
         yield
     finally:
@@ -61,14 +62,14 @@ def fix_access_log():
     # as sanic requires a different log format for it's access log we have to do this little dance
 
     formatter = logging.Formatter(
-        '[%(asctime)s] [%(levelname)s] [%(name)s]: %(request)s %(status)d %(byte)d %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
+        "[%(asctime)s] [%(levelname)s] [%(name)s]: %(request)s %(status)d %(byte)d %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
-    access = logging.getLogger('sanic.access')
+    access = logging.getLogger("sanic.access")
     access.addHandler(handler)
 
     # normally loggers propagate to higher hierarchy loggers, due to the change in format we disable this

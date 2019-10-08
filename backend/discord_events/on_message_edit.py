@@ -19,27 +19,41 @@ class OnMessageEditEvent(commands.Cog):
         if before.content != after.content:
             log.info("!=")
             if before.guild.id == backend.config.inktober_guild_id:
-                if before.channel.id in [backend.config.inktober_submit_channel, backend.config.bot_spam_channel]:
+                if before.channel.id in [
+                    backend.config.inktober_submit_channel,
+                    backend.config.bot_spam_channel,
+                ]:
                     log.info("In the channels")
-                    if await backend.helpers.check_if_in_tracking_table(before.id, self.bot.db):
+                    if await backend.helpers.check_if_in_tracking_table(
+                        before.id, self.bot.db
+                    ):
                         log.info("Is tracked")
                         message_id_to_update, my_message_channel_id = await backend.helpers.fetch_from_tracking_table(
-                            before.id, self.bot.db)
+                            before.id, self.bot.db
+                        )
 
-                        my_channel = before.guild.get_channel(str(my_message_channel_id))
+                        my_channel = before.guild.get_channel(
+                            str(my_message_channel_id)
+                        )
 
-                        message_to_update = await my_channel.get_message(message_id_to_update)
+                        message_to_update = await my_channel.get_message(
+                            message_id_to_update
+                        )
 
                         new_embed = message_to_update.embeds[0]
                         log.info(new_embed)
 
-                        new_embed_embed = discord.Embed(timestamp=discord.utils.parse_time(new_embed["timestamp"]),
-                                                        title=new_embed["title"],
-                                                        colour=15169815)
+                        new_embed_embed = discord.Embed(
+                            timestamp=discord.utils.parse_time(new_embed["timestamp"]),
+                            title=new_embed["title"],
+                            colour=15169815,
+                        )
 
                         new_embed_embed.set_image(url=new_embed["image"]["url"])
-                        new_embed_embed.set_author(name=new_embed["author"]["name"],
-                                                   icon_url=new_embed["author"]["icon_url"])
+                        new_embed_embed.set_author(
+                            name=new_embed["author"]["name"],
+                            icon_url=new_embed["author"]["icon_url"],
+                        )
                         await message_to_update.edit(embed=new_embed_embed)
                     else:
                         log.info("not in the channels")

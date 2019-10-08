@@ -23,8 +23,7 @@ class Bot(commands.Bot):
         await super().start(*args, **kwargs)
 
 
-inktober: Bot = Bot(command_prefix="b!",
-                    owner_id=240973228632178689)
+inktober: Bot = Bot(command_prefix="b!", owner_id=240973228632178689)
 inktober.load_extension("jishaku")
 
 
@@ -38,7 +37,9 @@ async def on_ready():
     for server in inktober.guilds:
         log.info(server.name)
 
-    await inktober.change_presence(activity=discord.Game(name="Haunting blobkind"), status=None, afk=False)
+    await inktober.change_presence(
+        activity=discord.Game(name="Haunting blobkind"), status=None, afk=False
+    )
 
 
 if __name__ == "__main__":
@@ -49,6 +50,8 @@ if __name__ == "__main__":
             inktober.load_extension("backend.module_loader")
         except Exception as E:
             exc = "{}: {}".format(type(E).__name__, E)
-            log.error("Failed to load extension {}\n{}".format("backend.module_loader", exc))
+            log.error(
+                "Failed to load extension {}\n{}".format("backend.module_loader", exc)
+            )
 
     inktober.run(backend.config.discord_token)
