@@ -32,7 +32,11 @@ class Errors(commands.Cog):
             server = context.message.guild.name
         else:
             server = None
-        # await error_channel.send("_ _\nInvoked With: {}\nArgs: {}\nServer: {}\nUser: {}\n```{}```".format(repr(context.invoked_with), repr(context.args), repr(server), repr(context.message.author.name), "".join(trace)))
+        await error_channel.send(
+            "_ _\nInvoked With: {}\nArgs: {}\nServer: {}\nUser: {}\n```{}```".format(repr(context.invoked_with),
+                                                                                     repr(context.args), repr(server),
+                                                                                     repr(context.message.author.name),
+                                                                                     "".join(trace)))
 
 
 def setup(bot):

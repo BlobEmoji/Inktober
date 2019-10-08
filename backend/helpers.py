@@ -24,19 +24,23 @@ async def user_role_authed(member: discord.Member):
 
 
 async def check_if_in_table(message_id: int, conn):
-    test = await conn.fetchval("""SELECT EXISTS (SELECT 1 from posted_inktober WHERE message_id = $1)""",
-                               int(message_id))
+    test = await conn.fetchval("""
+    SELECT EXISTS 
+    (SELECT 1 
+    FROM posted_inktober 
+    WHERE message_id = $1)""", int(message_id))
     return test
 
 
 async def insert_into_table(message_id, user_id, message, conn):
     log.info("Inserted {} by {} into table".format(message_id, user_id))
-    await conn.execute(
-        """INSERT INTO posted_inktober (message_id, user_id, message, inktober_day) VALUES($1, $2, $3, $4)""",
-        int(message_id),
-        int(user_id),
-        message,
-        "")
+    await conn.execute("""
+    INSERT INTO posted_inktober (message_id, user_id, message, inktober_day) 
+    VALUES($1, $2, $3, $4)""",
+                       int(message_id),
+                       int(user_id),
+                       message,
+                       "")
 
 
 async def insert_day(message_id, day, conn):
