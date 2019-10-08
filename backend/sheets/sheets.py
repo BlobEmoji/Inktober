@@ -1,15 +1,17 @@
+import datetime
 import logging
 import os.path
 import pickle
-from pprint import pprint
 
+import discord
 import googleapiclient.discovery
 import googleapiclient.http
-from discord.ext import commands
+from discord.ext import commands, tasks
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+import backend.day_themes
 from bot import Bot as Client
 
 # If modifying these scopes, delete the file token.pickle.
@@ -25,6 +27,21 @@ log = logging.getLogger(__name__)
 class Sheets(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
+        self.channel_description.start()
+
+    @tasks.loop(hours=1)
+    async def channel_description(self):
+        now_day = int(datetime.datetime.now().strftime("%d"))
+        channel: discord.TextChannel = self.bot.get_channel(628013530888667157)
+        await channel.edit(reason="Time passed", topic={f"Currently accepting "
+                                                        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
+                                                        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
+                                                        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}"})
+        channel: discord.TextChannel = self.bot.get_channel(628013545946218536)
+        await channel.edit(reason="Time passed", topic={f"Currently accepting "
+                                                        f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
+                                                        f"{now_day}: {backend.day_themes.day_themes[now_day]},"
+                                                        f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}"})
 
 
 def setup(bot):
