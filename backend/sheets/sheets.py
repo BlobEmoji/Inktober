@@ -166,7 +166,7 @@ async def update_days(user_id, data_list: list, new_day, old_days: list, bot):
     log.info("Updating days, {}, {}, {}".format(user_id, new_day, old_days))
     cell = 4 + data_list.index(user_id) + 1
 
-    if str(new_day) in old_days:
+    if str(new_day) in old_days[0].split(" "):
         log.warning(f"{user_id} tried to submit another post for {new_day}")
         channel = bot.get_channel(411929226066001930)
         await channel.send("{} tried to submit another post for {}".format(user_id, new_day))
