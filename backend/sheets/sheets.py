@@ -170,6 +170,7 @@ async def update_days(user_id, data_list: list, new_day, old_days: list, bot):
     old_days.append(new_day)
     new_list = old_days[0].split(" ")
     new_list.append(new_day)
+    new_list = [int(day) for day in new_list]
     new_list.sort()
 
     credentials = credential_getter()
@@ -178,7 +179,7 @@ async def update_days(user_id, data_list: list, new_day, old_days: list, bot):
         spreadsheetId=BLOB_EMOJI_SPREADSHEET_ID,
         range=f"👀!D{cell}",
         valueInputOption="RAW",
-        body={"values": [[" ".join(new_list)]]},
+        body={"values": [[" ".join(str(day) for day in new_list)]]},
     )
     response = request.execute()
 
