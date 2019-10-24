@@ -23,23 +23,31 @@ log = logging.getLogger(__name__)
 class Sheets(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
+        self.ink_month = 10 # October
         self.channel_description.start()
 
     def cog_unload(self):
         self.channel_description.cancel()
 
-    @tasks.loop(hours=1)
+
+    @tasks.loop(time=datetime.time(tzinfo=datetime.timezone.utc))
     async def channel_description(self):
         now_day = int(datetime.datetime.now().strftime("%d"))
         channel: discord.TextChannel = self.bot.get_channel(
             backend.config.inktober_submit_channel
         )
+        topics = []
+        if (now_day - 1) in backend.day_themes.day_themes.keys() and (now_date - datetime.timedelta(-1)).month == self.ink_month:
+            topics.append(f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]}")
+        if now_day in backend.day_themes.day_themes.keys() and now_date.month == self.ink_month:
+            topics.append(f"{now_day}: {backend.day_themes.day_themes[now_day]}")
+        if (now_day + 1) in backend.day_themes.day_themes.keys() and (now_date - datetime.timedelta(1)).month == self.ink_month:
+            topics.append(f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}")
+
+        topic_str = f"Currently accepting - " + ", ".join(topics) if topics else "Not accepting any submissions at this time"
         await channel.edit(
             reason="Time passed",
-            topic=f"Currently accepting "
-            f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]},"
-            f"{now_day}: {backend.day_themes.day_themes[now_day]},"
-            f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}",
+            topic=topic_str
         )
 
 
