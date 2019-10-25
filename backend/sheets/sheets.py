@@ -32,6 +32,7 @@ class Sheets(commands.Cog):
 
     @tasks.loop(time=datetime.time(tzinfo=datetime.timezone.utc))
     async def channel_description(self):
+        now_date = datetime.datetime.now(tz=datetime.timezone.utc)
         now_day = int(datetime.datetime.now().strftime("%d"))
         channel: discord.TextChannel = self.bot.get_channel(
             backend.config.inktober_submit_channel
