@@ -12,6 +12,7 @@ startup_extensions = [
     "backend.discord_events.on_reaction_add",
     "backend.discord_events.on_message_edit",
     "backend.discord_events.on_raw_reaction_add",
+    "backend.discord_events.on_command_error",
     "backend.command_checks",
     "backend.helpers",
     "backend.errors",
