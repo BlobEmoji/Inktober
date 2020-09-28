@@ -16,38 +16,40 @@ import backend.day_themes
 from bot import Bot as Client
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-BLOB_EMOJI_SPREADSHEET_ID = "1IIpC8dAYlpiOGMLlbwTKk03eZT8oTkou0GUCw-cTjhs"
+BLOB_EMOJI_SPREADSHEET_ID = "1dGa_d6269UTQUbR3ifnfNs0KxYVyPNUG9FO1QKRi-Lg"
 log = logging.getLogger(__name__)
 
 
 class Sheets(commands.Cog):
     def __init__(self, bot):
         self.bot: Client = bot
-        self.ink_month = 10 # October
+        self.ink_month = 10  # October
         self.channel_description.start()
 
     def cog_unload(self):
         self.channel_description.cancel()
 
-
-    @tasks.loop(time=datetime.time(tzinfo=datetime.timezone.utc))
+    @tasks.loop(hours=1)
     async def channel_description(self):
         now_date = datetime.datetime.now(tz=datetime.timezone.utc)
         now_day = int(datetime.datetime.now().strftime("%d"))
+
+        log.info("Waiting until ready.")
+        await self.bot.wait_until_ready()
+        log.info("Ready.")
+
         channel: discord.TextChannel = self.bot.get_channel(
             backend.config.inktober_submit_channel
         )
+
         topics = []
-        if (now_day - 1) in backend.day_themes.day_themes.keys() and (now_date - datetime.timedelta(-1)).month == self.ink_month:
-            topics.append(f"{now_day - 1}: {backend.day_themes.day_themes[now_day - 1]}")
         if now_day in backend.day_themes.day_themes.keys() and now_date.month == self.ink_month:
             topics.append(f"{now_day}: {backend.day_themes.day_themes[now_day]}")
-        if (now_day + 1) in backend.day_themes.day_themes.keys() and (now_date - datetime.timedelta(1)).month == self.ink_month:
-            topics.append(f"{now_day + 1}: {backend.day_themes.day_themes[now_day + 1]}")
 
-        topic_str = f"Currently accepting - " + ", ".join(topics) if topics else "Not accepting any submissions at this time"
+        topic_str = f"Currently accepting - " + ", ".join(
+            topics) if topics else "Not accepting any submissions at this time"
         await channel.edit(
-            reason="Time passed",
+            reason="1 hr Time passed",
             topic=topic_str
         )
 
@@ -67,7 +69,9 @@ def credential_getter():
             credentials.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "backend/sheets/credentials.json", SCOPES
+                "backend/sheets/credentials.json",
+                scopes=SCOPES,
+                redirect_uri='urn:ietf:wg:oauth:2.0:oob'
             )
             credentials = flow.run_local_server(port=0)
         # Save the credentials for the next run
