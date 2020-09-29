@@ -42,12 +42,22 @@ class Sheets(commands.Cog):
             backend.config.inktober_submit_channel
         )
 
-        topics = []
-        if now_day in backend.day_themes.day_themes.keys() and now_date.month == self.ink_month:
-            topics.append(f"{now_day}: {backend.day_themes.day_themes[now_day]}")
+        topic = ""
+        triday = backend.triday_utils.get_triday(now_day)
+        triday_days = backend.triday_utils.get_days_from_triday(triday)
+        if triday == 11:
+            topic = f"Day **31**: {backend.day_themes.day_themes[now_day]}"
+        elif now_day == triday_days[0]:
+            topic = f"Days **{triday_days[0]}**, {triday_days[1]} and {triday_days[2]}: {backend.day_themes.day_themes[now_day]}"
+        elif now_day == triday_days[1]:
+            topic = f"Days {triday_days[0]}, **{triday_days[1]}** and {triday_days[2]}: {backend.day_themes.day_themes[now_day]}"
+        elif now_day == triday_days[2]:
+            topic = f"Days {triday_days[0]}, {triday_days[1]} and **{triday_days[2]}**: {backend.day_themes.day_themes[now_day]}"
 
-        topic_str = f"Currently accepting - " + ", ".join(
-            topics) if topics else "Not accepting any submissions at this time"
+        if now_date.month == self.ink_month:
+            topic_str = f"Currently accepting {topic}"
+        else:
+            topic_str = "Not accepting any submissions at this time"
         await channel.edit(
             reason="1 hr Time passed",
             topic=topic_str
