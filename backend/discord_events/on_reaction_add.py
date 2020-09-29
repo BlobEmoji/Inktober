@@ -16,6 +16,7 @@ from bot import Bot as Client
 log = logging.getLogger(__name__)
 
 
+# Posts new inktober to the gallery channel
 async def inktober_post(message: discord.Message, bot_spam: discord.TextChannel):
     embed: discord.Embed = discord.Embed(timestamp=message.created_at, colour=15169815)
     message.attachments[0]: discord.Attachment
@@ -45,9 +46,9 @@ async def new_inktober(message: discord.Message, bot: Client):
     log.info("Got message {}".format(message.id))
     log.info(message.attachments[0].proxy_url)
 
-    bot_spam = message.guild.get_channel(backend.config.inktober_image_channel)
+    gallery_channel = message.guild.get_channel(backend.config.inktober_gallery_channel)
 
-    my_message_id = await inktober_post(message, bot_spam)
+    my_message_id = await inktober_post(message, gallery_channel)
 
     await backend.helpers.insert_into_message_origin_tracking(
         message.id, my_message_id.id, message.channel.id, bot.db
@@ -132,6 +133,7 @@ async def on_reaction_add_main(
                 )
         if message.attachments != []:
             if custom_emoji:
+                # If it is a green tick
                 if (
                     reaction_name.lower()
                     in backend.config.inktober_custom_accept_emotes
@@ -226,7 +228,7 @@ async def on_reaction_add_main(
                 intended_user = await backend.helpers.fetch_intended_user(
                     message.id, bot.db
                 )
-                intended_user: discord.Member = message.guild.get_member(intended_user)
+                intended_user: discord.Member = await message.guild.fetch_member(intended_user)
                 sheets_users = backend.sheets.sheets.fetch_users()
                 if str(intended_user.id) in sheets_users:
                     old_days = backend.sheets.sheets.fetch_user_days(
