@@ -13,6 +13,7 @@ from googleapiclient.discovery import build
 
 import backend.config
 import backend.day_themes
+import backend.triday_utils
 from bot import Bot as Client
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
