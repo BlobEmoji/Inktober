@@ -16,10 +16,13 @@ log = logging.getLogger(__name__)
 
 
 async def user_role_authed(member: discord.Member):
-    for role in member.roles:
-        if role.id in backend.config.inktober_authed_roles:
-            return True
-    else:
+    try:
+        for role in member.roles:
+            if role.id in backend.config.inktober_authed_roles:
+                return True
+        else:
+            return False
+    except AttributeError:
         return False
 
 
