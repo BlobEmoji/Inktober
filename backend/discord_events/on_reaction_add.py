@@ -39,6 +39,37 @@ async def location_check(message: discord.Message):
     return False
 
 
+def handle_lock(intended_user: discord.Member, sheets_users: list, day: str, bot, message):
+    """
+    Handles the processing of a locked message by either updating the data on G-Sheets in regards to days
+    and adding roles if that check is valid, or  by adding the user to the sheet in the first place
+    :param intended_user:
+    :param sheets_users:
+    :param day:
+    :param bot:
+    :param message:
+    """
+    if str(intended_user.id) in sheets_users:
+        log.info(f"Fetching old days for {intended_user.id}")
+        old_days = backend.sheets.sheets.fetch_user_days(str(intended_user.id), sheets_users)
+        log.info(f"Updating days for {intended_user.id}")
+        await backend.sheets.sheets.update_days(str(intended_user.id), sheets_users, day, old_days, bot)
+        log.info(f"Fetching new days for {intended_user.id}")
+        new_days = backend.sheets.sheets.fetch_user_days(str(intended_user.id), sheets_users)
+        parsed_data = convert_to_unique_days(new_days[0].split(" "))
+        if len(parsed_data) == 4:
+            log.info(f"Added role to {intended_user.id}")
+            await intended_user.add_roles(message.guild.get_role(761078728515518484))
+            backend.sheets.sheets.say_that_roles_added(str(intended_user.id), sheets_users)
+    else:
+        backend.sheets.sheets.insert_user_days(
+            intended_user.id,
+            sheets_users,
+            await backend.helpers.fetch_day(message.id, bot.db),
+            f"{intended_user.name}#{intended_user.discriminator}",
+        )
+
+
 def convert_to_unique_days(list_of_days: list):
     converted_list = []
     for day in list_of_days:
@@ -93,18 +124,6 @@ async def on_reaction_add_main(
         log.info("Not raw")
 
     if not await backend.helpers.user_role_authed(user):
-        if isinstance(reaction, discord.Reaction):
-            log.info(
-                "User not authed {} | {} {}".format(
-                    user.id, user.display_name, reaction.message.id
-                )
-            )
-        else:
-            log.info(
-                "User not authed {} | {} {}".format(
-                    user.id, user.display_name, message.id
-                )
-            )
         return
 
     if not raw:
@@ -142,10 +161,7 @@ async def on_reaction_add_main(
         if message.attachments != []:
             if custom_emoji:
                 # If it is a green tick
-                if (
-                    reaction_name.lower()
-                    in backend.config.inktober_custom_accept_emotes
-                ):
+                if reaction_name.lower() in backend.config.inktober_custom_accept_emotes:
                     if not await backend.helpers.check_if_in_table(message.id, bot.db):
                         log.info("Added new inktober {}".format(message.id))
                         await new_inktober(message, bot)
@@ -238,35 +254,7 @@ async def on_reaction_add_main(
                 )
                 intended_user: discord.Member = await message.guild.fetch_member(intended_user)
                 sheets_users = backend.sheets.sheets.fetch_users()
-                if str(intended_user.id) in sheets_users:
-                    log.info(f"Fetching old days for {intended_user.id}")
-                    old_days = backend.sheets.sheets.fetch_user_days(
-                        str(intended_user.id), sheets_users
-                    )
-                    log.info(f"Updating days for {intended_user.id}")
-                    await backend.sheets.sheets.update_days(
-                        str(intended_user.id), sheets_users, day, old_days, bot
-                    )
-                    log.info(f"Fetching new days for {intended_user.id}")
-                    new_days = backend.sheets.sheets.fetch_user_days(
-                        str(intended_user.id), sheets_users
-                    )
-                    parsed_data = convert_to_unique_days(new_days[0].split(" "))
-                    if len(parsed_data) == 4:
-                        log.info(f"Added role to {intended_user.id}")
-                        await intended_user.add_roles(
-                            message.guild.get_role(761078728515518484)
-                        )
-                        backend.sheets.sheets.say_that_roles_added(
-                            str(intended_user.id), sheets_users
-                        )
-                else:
-                    backend.sheets.sheets.insert_user_days(
-                        intended_user.id,
-                        sheets_users,
-                        await backend.helpers.fetch_day(message.id, bot.db),
-                        f"{intended_user.name}#{intended_user.discriminator}",
-                    )
+                handle_lock(intended_user, sheets_users, day, bot, message)
         else:
             log.info(
                 "{} {}".format(
