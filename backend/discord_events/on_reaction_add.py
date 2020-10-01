@@ -1,7 +1,7 @@
 import calendar
 import datetime
 import logging
-from typing import Union
+from typing import Union, List, Set
 
 import discord
 import discord.errors
@@ -16,22 +16,34 @@ from bot import Bot as Client
 log = logging.getLogger(__name__)
 
 
-# Posts new inktober to the gallery channel
-async def inktober_post(message: discord.Message, bot_spam: discord.TextChannel):
+async def inktober_post(message: discord.Message, bot_spam: discord.TextChannel) -> discord.Message:
+    """
+    Posts new Inktober post to the gallery channel specified in the Config
+
+    :param message: discord.Message
+    :param bot_spam: discord.TextChannel
+    :return: discord.Message
+    """
     embed: discord.Embed = discord.Embed(timestamp=message.created_at, colour=15169815)
     message.attachments[0]: discord.Attachment
 
     embed.set_image(url=message.attachments[0].proxy_url)
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
-    my_id = await bot_spam.send(embed=embed)
+    new_message = await bot_spam.send(embed=embed)
 
     for emote in backend.config.date_buttons:
-        await my_id.add_reaction(emote)
+        await new_message.add_reaction(emote)
 
-    return my_id
+    return new_message
 
 
-async def location_check(message: discord.Message):
+async def location_check(message: discord.Message) -> bool:
+    """
+    Check to see if the message is sent in both a valid server & in a valid channel for Inktober
+
+    :param message: discord.Message
+    :return: bool
+    """
     if message.guild.id == backend.config.inktober_server:
         if message.channel.id in backend.config.inktober_authed_channels:
             log.info("Inktober authed")
@@ -43,6 +55,7 @@ def handle_lock(intended_user: discord.Member, sheets_users: list, day: str, bot
     """
     Handles the processing of a locked message by either updating the data on G-Sheets in regards to days
     and adding roles if that check is valid, or  by adding the user to the sheet in the first place
+
     :param intended_user:
     :param sheets_users:
     :param day:
@@ -70,7 +83,13 @@ def handle_lock(intended_user: discord.Member, sheets_users: list, day: str, bot
         )
 
 
-def convert_to_unique_days(list_of_days: list):
+def convert_to_unique_days(list_of_days: List[int]) -> Set[str]:
+    """
+    Convert a list of ints (days) into their named equivalents & return a unique list
+
+    :param list_of_days: List[int]
+    :return: Set[str]
+    """
     converted_list = []
     for day in list_of_days:
         converted_list.append(backend.day_themes.day_themes[day])
@@ -79,6 +98,12 @@ def convert_to_unique_days(list_of_days: list):
 
 
 async def new_inktober(message: discord.Message, bot: Client):
+    """
+    Handler for all of the New Inktober logic such as backend & posting
+
+    :param message: discord.Message
+    :param bot: Client
+    """
     await backend.helpers.insert_into_table(
         message.id, message.author.id, message.content, bot.db
     )
@@ -97,6 +122,63 @@ async def new_inktober(message: discord.Message, bot: Client):
     )
 
 
+def reaction_logging(attachment: List[discord.Attachment], custom_emoji, reaction) -> None:
+    """
+    Just logging of stuff, unsure why I did this
+
+    :param attachment: List[discord.Attachment]
+    :param custom_emoji:
+    :param reaction:
+    """
+    try:
+        log.info(
+            "{} {} {} ".format(
+                attachment,
+                custom_emoji,
+                reaction.emoji.name.lower()
+                in backend.config.inktober_custom_accept_emotes,
+            )
+        )
+    except AttributeError:
+        if isinstance(reaction, discord.Reaction):
+            log.info("AE")
+            log.info(
+                "{} {} {} ".format(
+                    attachment,
+                    custom_emoji,
+                    reaction.emoji in backend.config.inktober_custom_accept_emotes,
+                )
+            )
+        else:
+            log.info("AE")
+            log.info(
+                "{} {} {} ".format(
+                    attachment,
+                    custom_emoji,
+                    reaction.name in backend.config.inktober_custom_accept_emotes,
+                )
+            )
+
+
+async def cleanup_reactions(message: discord.Message, user: discord.ClientUser) -> None:
+    """
+    Cleanup reactions (control buttons) from a message that was sent
+
+    :param message: discord.Message
+    :param user: discord.ClientUser
+    """
+    try:
+        await message.clear_reactions()
+    except discord.errors.Forbidden as Forbidden:
+        log.warning("Forbidden from clearing reactions: {}".format(Forbidden))
+        for emoji in backend.config.all_inktober_buttons:
+            await message.remove_reaction(emoji, user)
+    except discord.errors.HTTPException as HTTP:
+        log.warning("HTTPException: {}".format(HTTP))
+        for emoji in backend.config.all_inktober_buttons:
+            await message.remove_reaction(emoji, user)
+
+
 async def on_reaction_add_main(
     user: discord.Member,
     reaction: Union[discord.Reaction, discord.PartialEmoji],
@@ -104,11 +186,23 @@ async def on_reaction_add_main(
     raw: bool,
     message: discord.Message = None,
 ):
+    """
+    Main giant handle function for all logic dealing with adding reactions, both via on_reaction_add and the non cached
+    on_reaction_add_raw
+    :param user: discord.Member
+    :param reaction: Union[discord.Reaction, discord.PartialEmoji]
+    :param bot: Client
+    :param raw: bool
+    :param message: discord.Message
+    :return:
+    """
     custom_emoji: bool
 
+    # Ignore bot/self
     if user == bot.user:
         return
 
+    # If the message is raw, figure out basic logic of the emote used
     if raw:
         custom_emoji = reaction.is_custom_emoji()
         reaction_name = reaction_emoji = reaction.name
@@ -123,42 +217,19 @@ async def on_reaction_add_main(
     else:
         log.info("Not raw")
 
+    # If the user who reacted is not authorised to interact with the bot, reject them
     if not await backend.helpers.user_role_authed(user):
         return
 
     if not raw:
         message: discord.Message = reaction.message
 
+    # If the message is from a valid location
     if await location_check(message):
-        try:
-            log.info(
-                "{} {} {} ".format(
-                    message.attachments,
-                    custom_emoji,
-                    reaction.emoji.name.lower()
-                    in backend.config.inktober_custom_accept_emotes,
-                )
-            )
-        except AttributeError:
-            if isinstance(reaction, discord.Reaction):
-                log.info("AE")
-                log.info(
-                    "{} {} {} ".format(
-                        message.attachments,
-                        custom_emoji,
-                        reaction.emoji in backend.config.inktober_custom_accept_emotes,
-                    )
-                )
-            else:
-                log.info("AE")
-                log.info(
-                    "{} {} {} ".format(
-                        message.attachments,
-                        custom_emoji,
-                        reaction.name in backend.config.inktober_custom_accept_emotes,
-                    )
-                )
-        if message.attachments != []:
+        reaction_logging(message.attachments, custom_emoji, reaction)
+
+        # If there are attachments
+        if len(message.attachments) > 0:
             if custom_emoji:
                 # If it is a green tick
                 if reaction_name.lower() in backend.config.inktober_custom_accept_emotes:
@@ -179,6 +250,8 @@ async def on_reaction_add_main(
                 original_message_id, _ = await backend.helpers.grab_original_id(
                     message.id, bot.db
                 )
+
+                # Logic for what date button was pressed, current, next, previous
 
                 if reaction_emoji == "⏺":
                     day = now_day
@@ -238,16 +311,7 @@ async def on_reaction_add_main(
             day = await backend.helpers.fetch_day(message.id, bot.db)
             if day != "":
                 log.info("Locking {}".format(message.id))
-                try:
-                    await message.clear_reactions()
-                except discord.errors.Forbidden as Forbidden:
-                    log.info("Forbidden from clearing reactions: {}".format(Forbidden))
-                    for emoji in backend.config.all_inktober_buttons:
-                        await message.remove_reaction(emoji, bot.user)
-                except discord.errors.HTTPException as HTTP:
-                    log.info("HTTPException: {}".format(HTTP))
-                    for emoji in backend.config.all_inktober_buttons:
-                        await message.remove_reaction(emoji, bot.user)
+                await cleanup_reactions(message, bot.user)
 
                 intended_user = await backend.helpers.fetch_intended_user(
                     message.id, bot.db
