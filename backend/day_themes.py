@@ -29,5 +29,5 @@ day_themes = {
     28: "Unknown/Afterlife",
     29: "Unknown/Afterlife",
     30: "Unknown/Afterlife",
-    31: "What you want",
+    31: "All your prompts in a single picture/montage",
 }
