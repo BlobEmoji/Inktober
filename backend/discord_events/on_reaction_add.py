@@ -16,18 +16,19 @@ from bot import Bot as Client
 log = logging.getLogger(__name__)
 
 
-async def inktober_post(message: discord.Message, bot_spam: discord.TextChannel) -> discord.Message:
+async def inktober_post(message: discord.Message, bot_spam: discord.TextChannel, proxy_url: str) -> discord.Message:
     """
     Posts new Inktober post to the gallery channel specified in the Config
 
     :param message: discord.Message
     :param bot_spam: discord.TextChannel
+    :param proxy_url: str
     :return: discord.Message
     """
     embed: discord.Embed = discord.Embed(timestamp=message.created_at, colour=15169815)
     message.attachments[0]: discord.Attachment
 
-    embed.set_image(url=message.attachments[0].proxy_url)
+    embed.set_image(url=proxy_url)
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
     new_message = await bot_spam.send(embed=embed)
 
@@ -51,7 +52,7 @@ async def location_check(message: discord.Message) -> bool:
     return False
 
 
-def handle_lock(intended_user: discord.Member, sheets_users: list, day: str, bot, message):
+async def handle_lock(intended_user: discord.Member, sheets_users: list, day: str, bot, message):
     """
     Handles the processing of a locked message by either updating the data on G-Sheets in regards to days
     and adding roles if that check is valid, or  by adding the user to the sheet in the first place
@@ -104,15 +105,26 @@ async def new_inktober(message: discord.Message, bot: Client):
     :param message: discord.Message
     :param bot: Client
     """
+
+    proxy_url: str
+    if len(message.attachments) > 0:
+        proxy_url = message.attachments[0].proxy_url
+        log.info(message.attachments[0].proxy_url)
+    else:
+        proxy_url = message.embeds[0].url
+        if not proxy_url.endswith((".png", "jpg")):
+            log.warning(f"Warning: {proxy_url} for {message} doesn't appear to be a valid Image URL")
+            return
+
+    log.info("Added new inktober {}".format(message.id))
     await backend.helpers.insert_into_table(
         message.id, message.author.id, message.content, bot.db
     )
     log.info("Got message {}".format(message.id))
-    log.info(message.attachments[0].proxy_url)
 
     gallery_channel = message.guild.get_channel(backend.config.inktober_gallery_channel)
 
-    my_message_id = await inktober_post(message, gallery_channel)
+    my_message_id = await inktober_post(message, gallery_channel, proxy_url)
 
     await backend.helpers.insert_into_message_origin_tracking(
         message.id, my_message_id.id, message.channel.id, bot.db
@@ -228,18 +240,17 @@ async def on_reaction_add_main(
     if await location_check(message):
         reaction_logging(message.attachments, custom_emoji, reaction)
 
-        # If there are attachments
-        if len(message.attachments) > 0:
-            if custom_emoji:
+        # If its a custom emoji
+        if custom_emoji:
+            if len(message.attachments) > 0 or len(message.embeds) > 0:
                 # If it is a green tick
                 if reaction_name.lower() in backend.config.inktober_custom_accept_emotes:
                     if not await backend.helpers.check_if_in_table(message.id, bot.db):
-                        log.info("Added new inktober {}".format(message.id))
                         await new_inktober(message, bot)
                     else:
                         log.info("Message {} already in table".format(message.id))
-        else:
-            log.info("No attachments")
+            else:
+                log.info("No attachments AND embeds")
 
         if reaction_emoji in backend.config.date_buttons:
             log.info("Date buttons")
@@ -318,7 +329,7 @@ async def on_reaction_add_main(
                 )
                 intended_user: discord.Member = await message.guild.fetch_member(intended_user)
                 sheets_users = backend.sheets.sheets.fetch_users()
-                handle_lock(intended_user, sheets_users, day, bot, message)
+                await handle_lock(intended_user, sheets_users, day, bot, message)
         else:
             log.info(
                 "{} {}".format(
