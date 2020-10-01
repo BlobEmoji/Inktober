@@ -39,6 +39,14 @@ async def location_check(message: discord.Message):
     return False
 
 
+def convert_to_unique_days(list_of_days: list):
+    converted_list = []
+    for day in list_of_days:
+        converted_list.append(backend.day_themes.day_themes[day])
+
+    return set(converted_list)
+
+
 async def new_inktober(message: discord.Message, bot: Client):
     await backend.helpers.insert_into_table(
         message.id, message.author.id, message.content, bot.db
@@ -231,13 +239,21 @@ async def on_reaction_add_main(
                 intended_user: discord.Member = await message.guild.fetch_member(intended_user)
                 sheets_users = backend.sheets.sheets.fetch_users()
                 if str(intended_user.id) in sheets_users:
+                    log.info(f"Fetching old days for {intended_user.id}")
                     old_days = backend.sheets.sheets.fetch_user_days(
                         str(intended_user.id), sheets_users
                     )
+                    log.info(f"Updating days for {intended_user.id}")
                     await backend.sheets.sheets.update_days(
                         str(intended_user.id), sheets_users, day, old_days, bot
                     )
-                    if len(old_days[0].split(" ")) + 1 == 10:
+                    log.info(f"Fetching new days for {intended_user.id}")
+                    new_days = backend.sheets.sheets.fetch_user_days(
+                        str(intended_user.id), sheets_users
+                    )
+                    parsed_data = convert_to_unique_days(new_days[0].split(" "))
+                    if len(parsed_data) == 4:
+                        log.info(f"Added role to {intended_user.id}")
                         await intended_user.add_roles(
                             message.guild.get_role(761078728515518484)
                         )
