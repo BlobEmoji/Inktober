@@ -239,7 +239,7 @@ async def on_reaction_add_main(
                     )
                     if len(old_days[0].split(" ")) + 1 == 10:
                         await intended_user.add_roles(
-                            message.guild.get_role(628014126953791498)
+                            message.guild.get_role(761078728515518484)
                         )
                         backend.sheets.sheets.say_that_roles_added(
                             str(intended_user.id), sheets_users
