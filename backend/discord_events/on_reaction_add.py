@@ -93,7 +93,7 @@ def convert_to_unique_days(list_of_days: List[int]) -> Set[str]:
     """
     converted_list = []
     for day in list_of_days:
-        converted_list.append(backend.day_themes.day_themes[day])
+        converted_list.append(backend.day_themes.day_themes[int(day)])
 
     return set(converted_list)
 
