@@ -72,9 +72,10 @@ async def handle_lock(intended_user: discord.Member, sheets_users: list, day: st
         new_days = backend.sheets.sheets.fetch_user_days(str(intended_user.id), sheets_users)
         parsed_data = convert_to_unique_days(new_days[0].split(" "))
         if len(parsed_data) == 4:
-            log.info(f"Added role to {intended_user.id}")
+            log.info(f"Adding role to {intended_user.id}")
             await intended_user.add_roles(message.guild.get_role(761078728515518484))
             backend.sheets.sheets.say_that_roles_added(str(intended_user.id), sheets_users)
+            log.info(f"Added role to {intended_user.id}")
     else:
         backend.sheets.sheets.insert_user_days(
             intended_user.id,
