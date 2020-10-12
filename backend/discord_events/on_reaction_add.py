@@ -76,6 +76,8 @@ async def handle_lock(intended_user: discord.Member, sheets_users: list, day: st
             await intended_user.add_roles(message.guild.get_role(761078728515518484))
             backend.sheets.sheets.say_that_roles_added(str(intended_user.id), sheets_users)
             log.info(f"Added role to {intended_user.id}")
+            bot_spam_channel = message.guild.get_channel(backend.config.bot_spam_channel)
+            await bot_spam_channel.send(content=f"Added <@&761078728515518484> to {intended_user.mention}")
     else:
         backend.sheets.sheets.insert_user_days(
             intended_user.id,
